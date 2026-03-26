@@ -31,6 +31,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::post('/transaksi', [TransaksiController::class, 'store'])->name('transaksi.store');
     Route::post('/transaksi/{id}/kembalikan', [TransaksiController::class, 'kembalikan'])->name('transaksi.kembalikan');
     Route::delete('/transaksi/{id}', [TransaksiController::class, 'destroy'])->name('transaksi.destroy');
+    Route::get('/transaksi/export/{type}', [TransaksiController::class, 'exportTransaksi'])->name('transaksi.export');
+
+    // Pengembalian
+    Route::get('/pengembalian', [TransaksiController::class, 'pengembalian'])->name('pengembalian.index');
+    Route::get('/pengembalian/export/{type}', [TransaksiController::class, 'exportPengembalian'])->name('pengembalian.export');
 });
 
 // Siswa placeholder (untuk redirect setelah login sebagai siswa)

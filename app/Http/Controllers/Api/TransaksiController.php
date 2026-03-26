@@ -100,4 +100,43 @@ class TransaksiController extends Controller
             'data'    => $peminjaman
         ]);
     }
+
+    public function kembali(Request $request, $id)
+    {
+        $user = $request->user();
+        $anggota = \App\Models\Anggota::where('user_id', $user->id)->first();
+
+        if (!$anggota) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User ini tidak terdaftar sebagai Anggota Perpustakaan.'
+            ], 403);
+        }
+
+        $peminjaman = \App\Models\Peminjaman::where('id', $id)
+            ->where('anggota_id', $anggota->id)
+            ->where('status', 'dipinjam')
+            ->first();
+
+        if (!$peminjaman) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data peminjaman tidak ditemukan atau sudah dikembalikan.'
+            ], 404);
+        }
+
+        $peminjaman->update([
+            'tgl_kembali_aktual' => now()->toDateString(),
+            'status'              => 'dikembalikan'
+        ]);
+
+        // Tambah stok buku
+        $peminjaman->buku->increment('stok');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Buku berhasil dikembalikan',
+            'data'    => $peminjaman
+        ]);
+    }
 }

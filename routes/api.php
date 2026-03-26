@@ -20,4 +20,5 @@ Route::middleware('auth:sanctum')->group(function () {
     // Transaksi
     Route::get('/transaksi', [TransaksiController::class, 'index']);
     Route::post('/transaksi', [TransaksiController::class, 'store']);
+    Route::post('/transaksi/{id}/kembali', [TransaksiController::class, 'kembali']);
 });

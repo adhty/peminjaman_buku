@@ -98,4 +98,17 @@ class ApiService {
       return {'success': false, 'message': 'Terjadi kesalahan jaringan'};
     }
   }
+
+  Future<Map<String, dynamic>> returnBook(int transaksiId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${Constants.baseUrl}${Constants.transaksiEndpoint}/$transaksiId/kembali'),
+        headers: await _getHeaders(),
+      );
+
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan jaringan'};
+    }
+  }
 }

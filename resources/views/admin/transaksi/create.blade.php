@@ -93,12 +93,14 @@
 
         // Auto calculate return date (+7 days)
         $('#tgl_pinjam').on('change', function() {
-            let pinjam = new Date($(this).val());
-            if(!isNaN(pinjam.getTime())) {
+            let val = $(this).val(); // "YYYY-MM-DD"
+            if (val) {
+                let parts = val.split('-');
+                let pinjam = new Date(parts[0], parts[1] - 1, parts[2]); // local time, no UTC shift
                 pinjam.setDate(pinjam.getDate() + 7);
                 let day = ("0" + pinjam.getDate()).slice(-2);
                 let month = ("0" + (pinjam.getMonth() + 1)).slice(-2);
-                let dateStr = pinjam.getFullYear() + "-" + (month) + "-" + (day);
+                let dateStr = pinjam.getFullYear() + "-" + month + "-" + day;
                 $('#tgl_kembali_rencana').val(dateStr);
             }
         });

@@ -43,11 +43,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
+  Future<void> _logout() async {
+    await _apiService.logout();
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Riwayat Peminjaman'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _fetchHistory,

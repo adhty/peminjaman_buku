@@ -8,9 +8,41 @@ use App\Models\Buku;
 use App\Models\Peminjaman;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\TransaksiExport;
+use App\Exports\PengembalianExport;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TransaksiController extends Controller
 {
+    public function pengembalian(Request $request)
+    {
+        // Auto-update terlambat
+        Peminjaman::where('status', 'dipinjam')
+                  ->where('tgl_kembali_rencana', '<', today())
+                  ->update(['status' => 'terlambat']);
+
+        $query = Peminjaman::with(['anggota', 'buku'])
+            ->whereIn('status', ['dipinjam', 'terlambat']);
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->whereHas('anggota', fn($q) => $q->where('nama', 'like', "%{$search}%")
+                                                      ->orWhere('nis', 'like', "%{$search}%"))
+                  ->orWhereHas('buku', fn($q) => $q->where('judul', 'like', "%{$search}%"));
+            });
+        }
+
+        $transaksi      = $query->orderBy('tgl_kembali_rencana')->paginate(15)->withQueryString();
+        $dipinjam       = Peminjaman::where('status', 'dipinjam')->count();
+        $terlambat      = Peminjaman::where('status', 'terlambat')->count();
+        $kembaliHariIni = Peminjaman::where('status', 'dikembalikan')
+                            ->whereDate('tgl_kembali_aktual', today())->count();
+
+        return view('admin.pengembalian.index', compact('transaksi', 'dipinjam', 'terlambat', 'kembaliHariIni'));
+    }
+
     public function index(Request $request)
     {
         // Auto-update terlambat
@@ -118,5 +150,45 @@ class TransaksiController extends Controller
         $peminjaman->delete();
 
         return redirect()->route('admin.transaksi.index')->with('success', 'Data transaksi berhasil dihapus.');
+    }
+
+    public function exportTransaksi(Request $request, $type)
+    {
+        $status = $request->status ?? 'all';
+        $filename = 'laporan-transaksi-' . now()->format('YmdHis');
+
+        if ($type === 'excel') {
+            return Excel::download(new TransaksiExport($status), $filename . '.xlsx');
+        } elseif ($type === 'pdf') {
+            $transaksi = Peminjaman::with(['anggota', 'buku'])->latest();
+            if ($status !== 'all') {
+                $transaksi->where('status', $status);
+            }
+            $transaksi = $transaksi->get();
+
+            $pdf = Pdf::loadView('admin.transaksi.pdf', compact('transaksi', 'status'));
+            return $pdf->download($filename . '.pdf');
+        }
+
+        return back();
+    }
+
+    public function exportPengembalian($type)
+    {
+        $filename = 'laporan-pengembalian-' . now()->format('YmdHis');
+
+        if ($type === 'excel') {
+            return Excel::download(new PengembalianExport(), $filename . '.xlsx');
+        } elseif ($type === 'pdf') {
+            $transaksi = Peminjaman::with(['anggota', 'buku'])
+                ->where('status', 'dikembalikan')
+                ->orderByDesc('tgl_kembali_aktual')
+                ->get();
+
+            $pdf = Pdf::loadView('admin.pengembalian.pdf', compact('transaksi'));
+            return $pdf->download($filename . '.pdf');
+        }
+
+        return back();
     }
 }

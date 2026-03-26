@@ -259,6 +259,16 @@
                     <i class="bi bi-arrow-left-right"></i> <span>Transaksi Peminjaman</span>
                 </a>
             </li>
+            <li>
+                <a href="{{ route('admin.pengembalian.index') }}" class="{{ request()->routeIs('admin.pengembalian.*') ? 'active' : '' }}">
+                    <i class="bi bi-box-arrow-in-down"></i>
+                    <span>Pengembalian Buku</span>
+                    @php $pending = \App\Models\Peminjaman::whereIn('status', ['dipinjam','terlambat'])->count(); @endphp
+                    @if($pending > 0)
+                        <span class="badge bg-danger ms-auto" style="font-size:10px;">{{ $pending }}</span>
+                    @endif
+                </a>
+            </li>
         </ul>
 
         <div class="sidebar-user mt-auto d-flex align-items-center justify-content-between">

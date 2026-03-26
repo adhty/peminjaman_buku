@@ -9,9 +9,17 @@
         <h2 class="h4 fw-bold mb-1">Sirkulasi Peminjaman</h2>
         <p class="text-muted mb-0" style="font-size: 14px;">Kelola peminjaman dan pengembalian buku</p>
     </div>
-    <a href="{{ route('admin.transaksi.create') }}" class="btn btn-primary shadow-sm">
-        <i class="bi bi-plus-lg me-1"></i> Pinjam Buku
-    </a>
+    <div class="d-flex gap-2">
+        <a href="{{ route('admin.transaksi.export', ['type' => 'excel', 'status' => request('status')]) }}" class="btn btn-success shadow-sm">
+            <i class="bi bi-file-earmark-excel me-1"></i> Excel
+        </a>
+        <a href="{{ route('admin.transaksi.export', ['type' => 'pdf', 'status' => request('status')]) }}" class="btn btn-danger shadow-sm">
+            <i class="bi bi-file-earmark-pdf me-1"></i> PDF
+        </a>
+        <a href="{{ route('admin.transaksi.create') }}" class="btn btn-primary shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i> Pinjam Buku
+        </a>
+    </div>
 </div>
 
 <div class="card shadow-sm border-0">
