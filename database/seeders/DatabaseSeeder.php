@@ -25,8 +25,8 @@ class DatabaseSeeder extends Seeder
         // Siswa user
         $siswa = User::create([
             'username' => 'siswa1',
-            'name'     => 'Budi Santoso',
-            'email'    => 'budi@sekolah.com',
+            'name'     => 'Ahmad Fauzi',
+            'email'    => 'ahmad@sekolah.com',
             'password' => Hash::make('siswa123'),
             'role'     => 'siswa',
         ]);
