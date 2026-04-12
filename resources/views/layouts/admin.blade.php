@@ -17,6 +17,8 @@
         :root {
             --primary: #4f46e5;
             --primary-hover: #4338ca;
+            --bs-primary: #4f46e5;
+            --bs-primary-rgb: 79, 70, 229;
             --sidebar-bg-from: #1e3a8a;
             --sidebar-bg-to: #312e81;
             --sidebar-active: rgba(255, 255, 255, 0.15);
@@ -34,8 +36,6 @@
         }
         
         /* Global Overrides */
-        .bg-primary { background-color: var(--primary) !important; }
-        .text-primary { color: var(--primary) !important; }
         .btn-primary { 
             background-color: var(--primary); 
             border-color: var(--primary); 
@@ -252,8 +252,13 @@
                     <i class="bi bi-people"></i> <span>Kelola Anggota</span>
                 </a>
             </li>
+            <li>
+                <a href="{{ route('admin.user.index') }}" class="{{ request()->routeIs('admin.user.*') ? 'active' : '' }}">
+                    <i class="bi bi-person-gear"></i> <span>Kelola User</span>
+                </a>
+            </li>
 
-            <li class="px-4 mt-4 mb-2 text-uppercase" style="font-size: 0.7rem; font-weight: 600; color: #94a3b8; letter-spacing: 0.05em;">Sirkulasi</li>
+            <li class="px-4 mt-4 mb-2 text-uppercase" style="font-size: 0.7rem; font-weight: 600; color: #94a3b8; letter-spacing: 0.05em;">Transaksi</li>
             <li>
                 <a href="{{ route('admin.transaksi.index') }}" class="{{ request()->routeIs('admin.transaksi.*') ? 'active' : '' }}">
                     <i class="bi bi-arrow-left-right"></i> <span>Transaksi Peminjaman</span>

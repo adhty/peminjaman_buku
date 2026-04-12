@@ -39,7 +39,7 @@
                         <tr>
                             <th width="5%" class="ps-4">NO</th>
                             <th>KODE</th>
-                            <th width="30%">JUDUL BUKU</th>
+                            <th width="35%">DETAIL BUKU</th>
                             <th>PENGARANG</th>
                             <th>KATEGORI</th>
                             <th>STOK</th>
@@ -52,8 +52,19 @@
                             <td class="ps-4 text-muted">{{ $buku->firstItem() + $loop->index }}</td>
                             <td><span class="badge bg-light text-dark border font-monospace">{{ $item->kode_buku }}</span></td>
                             <td>
-                                <div class="fw-bold">{{ $item->judul }}</div>
-                                <div class="small text-muted">{{ $item->penerbit }} ({{ $item->tahun_terbit }})</div>
+                                <div class="d-flex align-items-center gap-3">
+                                    @if($item->cover)
+                                        <img src="{{ Storage::url($item->cover) }}" alt="Cover" class="rounded shadow-sm object-fit-cover" style="width: 45px; height: 60px;">
+                                    @else
+                                        <div class="bg-light rounded d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm border" style="width: 45px; height: 60px;">
+                                            <i class="bi bi-book text-muted opacity-50"></i>
+                                        </div>
+                                    @endif
+                                    <div>
+                                        <div class="fw-bold text-dark">{{ $item->judul }}</div>
+                                        <div class="small text-muted">{{ $item->penerbit }} ({{ $item->tahun_terbit }})</div>
+                                    </div>
+                                </div>
                             </td>
                             <td>{{ $item->pengarang }}</td>
                             <td><span class="badge bg-primary bg-opacity-10 text-primary">{{ $item->kategori }}</span></td>
@@ -66,6 +77,9 @@
                             </td>
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm">
+                                    <a href="{{ route('admin.buku.show', $item->id) }}" class="btn btn-info text-white" title="Detail">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
                                     <a href="{{ route('admin.buku.edit', $item->id) }}" class="btn btn-warning text-white" title="Edit">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>

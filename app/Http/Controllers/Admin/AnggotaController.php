@@ -26,6 +26,15 @@ class AnggotaController extends Controller
         return view('admin.anggota.index', compact('anggota'));
     }
 
+    public function show(Anggota $anggota)
+    {
+        $anggota->load(['peminjaman' => function($query) {
+            $query->with('buku')->latest('tgl_pinjam');
+        }]);
+        
+        return view('admin.anggota.show', compact('anggota'));
+    }
+
     public function create()
     {
         return view('admin.anggota.create');

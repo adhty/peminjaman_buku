@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Buku;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class BukuController extends Controller
 {
@@ -27,6 +28,11 @@ class BukuController extends Controller
         return view('admin.buku.index', compact('buku'));
     }
 
+    public function show(Buku $buku)
+    {
+        return view('admin.buku.show', compact('buku'));
+    }
+
     public function create()
     {
         return view('admin.buku.create');
@@ -41,12 +47,20 @@ class BukuController extends Controller
             'penerbit'     => 'required|max:100',
             'tahun_terbit' => 'required|digits:4|integer|min:1900|max:' . date('Y'),
             'kategori'     => 'required|max:50',
+            'deskripsi'    => 'nullable|string',
             'stok'         => 'required|integer|min:0',
+            'cover'        => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ], [
             'kode_buku.unique' => 'Kode buku sudah digunakan.',
         ]);
 
-        Buku::create($request->all());
+        $data = $request->all();
+
+        if ($request->hasFile('cover')) {
+            $data['cover'] = $request->file('cover')->store('buku_covers', 'public');
+        }
+
+        Buku::create($data);
 
         return redirect()->route('admin.buku.index')->with('success', 'Buku berhasil ditambahkan.');
     }
@@ -65,10 +79,21 @@ class BukuController extends Controller
             'penerbit'     => 'required|max:100',
             'tahun_terbit' => 'required|digits:4|integer|min:1900|max:' . date('Y'),
             'kategori'     => 'required|max:50',
+            'deskripsi'    => 'nullable|string',
             'stok'         => 'required|integer|min:0',
+            'cover'        => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $buku->update($request->all());
+        $data = $request->all();
+
+        if ($request->hasFile('cover')) {
+            if ($buku->cover) {
+                Storage::disk('public')->delete($buku->cover);
+            }
+            $data['cover'] = $request->file('cover')->store('buku_covers', 'public');
+        }
+
+        $buku->update($data);
 
         return redirect()->route('admin.buku.index')->with('success', 'Data buku berhasil diperbarui.');
     }
@@ -77,6 +102,10 @@ class BukuController extends Controller
     {
         if ($buku->peminjaman()->where('status', 'dipinjam')->exists()) {
             return back()->with('error', 'Buku tidak dapat dihapus karena sedang dipinjam.');
+        }
+
+        if ($buku->cover) {
+            Storage::disk('public')->delete($buku->cover);
         }
 
         $buku->delete();

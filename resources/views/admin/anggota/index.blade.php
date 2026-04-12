@@ -4,15 +4,7 @@
 @section('page-title', 'Anggota')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="h4 fw-bold mb-1">Data Anggota Perpustakaan</h2>
-        <p class="text-muted mb-0" style="font-size: 14px;">Kelola profil dan data peminjam di perpustakaan</p>
-    </div>
-    <a href="{{ route('admin.anggota.create') }}" class="btn btn-primary shadow-sm">
-        <i class="bi bi-person-plus me-1"></i> Tambah Anggota
-    </a>
-</div>
+
 
 <div class="card shadow-sm border-0">
     <div class="card-header bg-white py-3">
@@ -29,9 +21,7 @@
         @if($anggota->isEmpty())
             <div class="text-center py-5 text-muted">
                 <i class="bi bi-people display-4 opacity-50 mb-3 d-block"></i>
-                <p>Belum ada data anggota.</p>
-                <a href="{{ route('admin.anggota.create') }}" class="btn btn-outline-primary mt-2">Tambah Data Pertama</a>
-            </div>
+                <p 
         @else
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -68,6 +58,9 @@
                             </td>
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm">
+                                    <a href="{{ route('admin.anggota.show', $item->id) }}" class="btn btn-info text-white" title="Detail">
+                                        <i class="bi bi-person-lines-fill"></i>
+                                    </a>
                                     <a href="{{ route('admin.anggota.edit', $item->id) }}" class="btn btn-warning text-white" title="Edit">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>

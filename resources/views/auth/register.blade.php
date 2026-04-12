@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sistem Perpustakaan Digital</title>
+    <title>Daftar Akun - Sistem Perpustakaan Digital</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -113,6 +113,7 @@
             flex-direction: column;
             justify-content: center;
             padding: 4rem;
+            overflow-y: auto;
         }
         .login-right-inner {
             width: 100%;
@@ -185,18 +186,19 @@
             background-color: #4338ca;
             border-color: #4338ca;
         }
-        .admin-hint {
-            color: #94a3b8;
-            font-size: 0.85rem;
+        .register-link {
             text-align: center;
             margin-top: 1.5rem;
+            color: #64748b;
+            font-size: 0.95rem;
         }
-
-        .user-hint {
-            color: #94a3b8;
-            font-size: 0.85rem;
-            text-align: center;
-            margin-top: 1.5rem;
+        .register-link a {
+            color: #4f46e5;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .register-link a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -218,25 +220,21 @@
                 </h1>
                 
                 <p class="left-subtitle">
-                    Kelola data buku, anggota, dan transaksi peminjaman dengan mudah dan efisien.
+                    Daftar sekarang untuk meminjam buku secara digital dan mengatur histori peminjaman dengan mudah.
                 </p>
                 
                 <ul class="feature-list">
                     <li class="feature-item">
                         <div class="feature-icon"><i class="bi bi-book"></i></div>
-                        <span>CRUD Data Buku & Stok</span>
+                        <span>Akses Ribuan Katalog Buku</span>
                     </li>
                     <li class="feature-item">
-                        <div class="feature-icon"><i class="bi bi-people"></i></div>
-                        <span>Kelola Data Anggota</span>
+                        <div class="feature-icon"><i class="bi bi-phone"></i></div>
+                        <span>Akses Dimana Saja dan Kapan Saja</span>
                     </li>
                     <li class="feature-item">
-                        <div class="feature-icon"><i class="bi bi-arrow-left-right"></i></div>
-                        <span>Manajemen Transaksi Peminjaman</span>
-                    </li>
-                    <li class="feature-item">
-                        <div class="feature-icon"><i class="bi bi-graph-up"></i></div>
-                        <span>Dashboard Statistik Real-time</span>
+                        <div class="feature-icon"><i class="bi bi-journal-check"></i></div>
+                        <span>Lacak Riwayat Pinjaman Lebih Mudah</span>
                     </li>
                 </ul>
             </div>
@@ -245,62 +243,62 @@
         <!-- Right Panel -->
         <div class="login-right">
             <div class="login-right-inner">
-                <h2 class="right-title">Selamat Datang 👋</h2>
-                <p class="right-subtitle">Silakan login untuk mengakses sistem perpustakaan</p>
+                <h2 class="right-title">Daftar Akun Baru 📝</h2>
+                <p class="right-subtitle">Buat akun Anda dengan melengkapi form di bawah ini.</p>
 
-                @if($errors->any())
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ $errors->first() }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-                @endif
-
-                @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ session('error') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-                @endif
-
-                <form method="POST" action="{{ route('login.post') }}">
+                <form method="POST" action="{{ route('register.post') }}">
                     @csrf
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Nama Lengkap</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-person-vcard"></i></span>
+                            <input type="text" name="name" class="form-control shadow-none @error('name') is-invalid @enderror" value="{{ old('name') }}" placeholder="Masukkan nama lengkap" required autofocus>
+                        </div>
+                        @error('name')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                    </div>
+
                     <div class="mb-3">
                         <label class="form-label">Username</label>
                         <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-person"></i></span>
-                            <input type="text" name="username" class="form-control shadow-none @error('username') is-invalid @enderror" value="{{ old('username') }}" placeholder="Masukkan username" required autofocus>
+                            <span class="input-group-text"><i class="bi bi-at"></i></span>
+                            <input type="text" name="username" class="form-control shadow-none @error('username') is-invalid @enderror" value="{{ old('username') }}" placeholder="Pilih username unik" required>
                         </div>
                         @error('username')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                     </div>
 
-                    <div class="mb-4">
+                    <div class="mb-3">
+                        <label class="form-label">Email Aktif</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input type="email" name="email" class="form-control shadow-none @error('email') is-invalid @enderror" value="{{ old('email') }}" placeholder="contoh@email.com" required>
+                        </div>
+                        @error('email')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label">Password</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                            <input type="password" name="password" class="form-control shadow-none @error('password') is-invalid @enderror" placeholder="Masukkan password" required>
+                            <input type="password" name="password" class="form-control shadow-none @error('password') is-invalid @enderror" placeholder="Buat password baru (Min. 6 Karakter)" required>
                         </div>
                         @error('password')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                     </div>
 
-                    <div class="mb-4 form-check">
-                        <input type="checkbox" class="form-check-input" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                        <label class="form-check-label text-muted" for="remember">Ingat saya</label>
+                    <div class="mb-4">
+                        <label class="form-label">Konfirmasi Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                            <input type="password" name="password_confirmation" class="form-control shadow-none" placeholder="Ulangi password Anda" required>
+                        </div>
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-box-arrow-in-right me-2"></i> Masuk ke Sistem
+                        <i class="bi bi-person-plus me-2"></i> Buat Akun Siswa
                     </button>
                     
-                    <div class="admin-hint">
-                        <i class="bi bi-shield-check me-1"></i> Admin: admin / admin123
-                    </div>
-
-                    <div class="user-hint mb-4">
-                        <i class="bi bi-person-check me-1"></i> User: ahmad / siswa123
-                    </div>
-
-                    <div class="text-center mt-4 pt-3 border-top" style="font-size: 0.95rem; color: #64748b;">
-                        Belum punya akun? <a href="{{ route('register') }}" style="color: #4f46e5; text-decoration: none; font-weight: 600;">Daftar di sini</a>
+                    <div class="register-link border-top pt-3 mt-4">
+                        Sudah punya akun? <a href="{{ route('login') }}">Masuk di sini</a>
                     </div>
                 </form>
             </div>
