@@ -66,10 +66,15 @@
             color: #f1f5f9;
             transition: all 0.3s;
             box-shadow: 4px 0 15px rgba(0,0,0,0.05);
-            position: relative;
+            position: fixed;
             overflow: hidden;
             z-index: 10;
         }
+
+        #content {
+            margin-left: 260px;
+        }
+        
         #sidebar::before {
             content: '';
             position: absolute;
@@ -199,15 +204,17 @@
             </li>
         </ul>
 
-        <div class="sidebar-user mt-auto d-flex align-items-center gap-3">
-            <div class="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 38px; height: 38px; font-weight: 700; font-size: 1.1rem;">
+     <!-- 🔥 INI YANG DIUBAH -->
+        <a href="{{ route('siswa.profile') }}" class="sidebar-user mt-auto d-flex align-items-center gap-3 text-decoration-none">
+            <div class="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
                 {{ strtoupper(substr(auth()->user()->name ?? 'S', 0, 1)) }}
             </div>
-            <div class="overflow-hidden">
-                <div class="fw-bold text-white lh-sm text-truncate" style="font-size: 0.95rem;">{{ auth()->user()->name ?? 'Siswa' }}</div>
-                <small style="color: #94a3b8; font-size: 0.8rem;">Siswa</small>
+            <div>
+                <div class="text-white">{{ auth()->user()->name ?? 'Siswa' }}</div>
+                <small>Siswa</small>
             </div>
-        </div>
+        </a>
+        <!-- 🔥 SAMPAI SINI -->
     </nav>
 
     <!-- Page Content -->

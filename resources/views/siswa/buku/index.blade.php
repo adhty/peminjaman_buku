@@ -71,17 +71,23 @@
                         </div>
                         
                         @if($item->stok > 0)
-                            <div class="d-flex gap-2">
-                                <a href="{{ route('siswa.buku.show', $item->id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">
-                                    Detail
-                                </a>
-                                <form action="{{ route('siswa.buku.pinjam', $item->id) }}" method="POST">
-                                    @csrf
-                                    <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold" onclick="confirmPinjam(this.form, '{{ addslashes($item->judul) }}')">
-                                        Pinjam <i class="bi bi-arrow-right-short"></i>
-                                    </button>
-                                </form>
-                            </div>
+                        <div class="d-flex gap-1">
+                            <a href="{{ route('siswa.buku.show', $item->id) }}" 
+                            class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1 fw-semibold" 
+                            style="font-size: 0.75rem;">
+                                Detail
+                            </a>
+
+                            <form action="{{ route('siswa.buku.pinjam', $item->id) }}" method="POST">
+                                @csrf
+                                <button type="button" 
+                                    class="btn btn-primary btn-sm rounded-pill px-2 py-1 fw-semibold" 
+                                    style="font-size: 0.75rem;"
+                                    onclick="confirmPinjam(this.form, '{{ addslashes($item->judul) }}')">
+                                    Pinjam <i class="bi bi-arrow-right-short"></i>
+                                </button>
+                            </form>
+                        </div>
                         @else
                             <div class="d-flex gap-2">
                                 <a href="{{ route('siswa.buku.show', $item->id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">

@@ -6,35 +6,50 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\TransaksiController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AuthController;
+
 use App\Http\Controllers\Siswa\BukuController as SiswaBukuController;
 use App\Http\Controllers\Siswa\DashboardController as SiswaDashboardController;
 use App\Http\Controllers\Siswa\ProfilController as SiswaProfilController;
 use App\Http\Controllers\Siswa\TransaksiController as SiswaTransaksiController;
+use App\Http\Controllers\Siswa\ProfileController as SiswaProfileController;
+
+// 🔥 TAMBAHAN CONTROLLER STATISTIK
+use App\Http\Controllers\Siswa\StatistikController;
+
 use Illuminate\Support\Facades\Route;
 
 // Root redirect
 Route::get('/', fn() => redirect()->route('login'));
 
-// Auth Routes
+
+// ======================
+// AUTH
+// ======================
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Admin Routes
+
+// ======================
+// ADMIN
+// ======================
 Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(function () {
+
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Buku CRUD
+    // Buku
     Route::resource('buku', BukuController::class);
 
-    // Anggota CRUD
+    // Anggota
     Route::resource('anggota', AnggotaController::class)->parameters([
         'anggota' => 'anggota'
     ]);
 
-    // User CRUD
+    // User
     Route::resource('user', UserController::class);
 
     // Transaksi
@@ -50,21 +65,32 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::get('/pengembalian/export/{type}', [TransaksiController::class, 'exportPengembalian'])->name('pengembalian.export');
 });
 
-// Siswa Routes
+
+// ======================
+// SISWA
+// ======================
 Route::prefix('siswa')->middleware(['auth', 'siswa'])->name('siswa.')->group(function () {
+
     // Dashboard
     Route::get('/dashboard', [SiswaDashboardController::class, 'index'])->name('dashboard');
 
-    // Lengkapi Profil
+    // 🔥 LENGKAPI PROFIL (ANGGOTA)
     Route::get('/profil/lengkapi', [SiswaProfilController::class, 'create'])->name('profil.create');
     Route::post('/profil/lengkapi', [SiswaProfilController::class, 'store'])->name('profil.store');
 
-    // Katalog Buku
+    // 🔥 PROFILE SIDEBAR (EDIT USER)
+    Route::get('/profile', [SiswaProfileController::class, 'index'])->name('profile');
+    Route::post('/profile/update', [SiswaProfileController::class, 'update'])->name('profile.update');
+
+    // 📊 STATISTIK PEMINJAMAN (TAMBAHAN)
+    Route::get('/statistik', [StatistikController::class, 'index'])->name('statistik');
+
+    // Buku
     Route::get('/buku', [SiswaBukuController::class, 'index'])->name('buku.index');
     Route::get('/buku/{id}', [SiswaBukuController::class, 'show'])->name('buku.show');
     Route::post('/buku/{id}/pinjam', [SiswaBukuController::class, 'pinjam'])->name('buku.pinjam');
 
-    // Riwayat Pinjaman
+    // Transaksi
     Route::get('/transaksi', [SiswaTransaksiController::class, 'index'])->name('transaksi.index');
     Route::post('/transaksi/{id}/kembalikan', [SiswaTransaksiController::class, 'kembalikan'])->name('transaksi.kembalikan');
 });

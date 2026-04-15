@@ -25,8 +25,7 @@
                 <i class="bi bi-journal-x text-muted opacity-25" style="font-size: 5rem;"></i>
                 <h4 class="mt-4 mb-2">Belum Ada Transaksi</h4>
                 <p class="text-muted mb-0">Anda belum pernah meminjam buku. Silakan cari buku di katalog.</p>
-                <a href="{{ route('siswa.buku.index') }}" class="btn btn-primary mt-4 px-4 btn-lg" style="border-radius: 10px;">Lihat Katalog Buku</a>
-            </div>
+                <a href="{{ route('siswa.buku.index') }}" class="btn btn-primary mt-4 px-3 py-2 btn-sm w-auto" style="border-radius: 10px;"> Lihat Katalog Buku</a>            </div>
         @else
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">

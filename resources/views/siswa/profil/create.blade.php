@@ -33,7 +33,7 @@
                             <label class="form-label fw-semibold">Kelas <span class="text-danger">*</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-end-0"><i class="bi bi-mortarboard text-muted"></i></span>
-                                <input type="text" name="kelas" class="form-control border-start-0 ps-0 @error('kelas') is-invalid @enderror" value="{{ old('kelas') }}" placeholder="Contoh: X RPL 1" required>
+                                <input type="text" name="kelas" class="form-control border-start-0 ps-0 @error('kelas') is-invalid @enderror" value="{{ old('kelas') }}" placeholder="Contoh: X RPL 2" required>
                             </div>
                             @error('kelas')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                         </div>

@@ -71,7 +71,8 @@
                     @if($buku->stok > 0)
                         <form action="{{ route('siswa.buku.pinjam', $buku->id) }}" method="POST" id="formPinjamDetail">
                             @csrf
-                            <button type="button" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm" onclick="confirmPinjam(document.getElementById('formPinjamDetail'), '{{ addslashes($buku->judul) }}')">
+                            <!-- HANYA INI YANG DIUBAH -->
+                            <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm" onclick="confirmPinjam(document.getElementById('formPinjamDetail'), '{{ addslashes($buku->judul) }}')">
                                 <i class="bi bi-journal-plus me-2"></i> Pinjam Buku Ini Sekarang
                             </button>
                         </form>
@@ -130,7 +131,6 @@
         formPinjamActive = form;
         document.getElementById('judulBukuPinjam').textContent = judul;
         
-        // Reset input date
         document.getElementById('inputTglKembali').value = '';
         
         var myModal = new bootstrap.Modal(document.getElementById('pinjamModal'));
@@ -153,7 +153,7 @@
             formPinjamActive.appendChild(hiddenInput);
 
             this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memproses...';
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
             formPinjamActive.submit();
         }
     });

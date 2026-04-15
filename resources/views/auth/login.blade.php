@@ -296,7 +296,7 @@
                     </div>
 
                     <div class="user-hint mb-4">
-                        <i class="bi bi-person-check me-1"></i> User: ahmad / siswa123
+                        <i class="bi bi-person-check me-1"></i> User: siswa1 / siswa123
                     </div>
 
                     <div class="text-center mt-4 pt-3 border-top" style="font-size: 0.95rem; color: #64748b;">

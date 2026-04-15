@@ -67,9 +67,13 @@
             color: #f1f5f9;
             transition: all 0.3s;
             box-shadow: 4px 0 15px rgba(0,0,0,0.05);
-            position: relative;
+            position: fixed;
             overflow: hidden;
             z-index: 10;
+        }
+
+        #content {
+            margin-left: 260px;
         }
         /* Top bubble effect */
         #sidebar::before {
