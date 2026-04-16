@@ -56,6 +56,18 @@ class TransaksiController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('filter_date')) {
+            $query->whereDate('tgl_pinjam', $request->filter_date);
+        }
+
+        if ($request->filled('filter_month')) {
+            $parts = explode('-', $request->filter_month);
+            if (count($parts) == 2) {
+                $query->whereYear('tgl_pinjam', $parts[0])
+                      ->whereMonth('tgl_pinjam', $parts[1]);
+            }
+        }
+
         if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('anggota', fn($q) => $q->where('nama', 'like', "%{$search}%")
@@ -106,6 +118,62 @@ class TransaksiController extends Controller
         return redirect()->route('admin.transaksi.index')->with('success', 'Peminjaman berhasil dicatat.');
     }
 
+    public function approve($id)
+    {
+        $peminjaman = Peminjaman::findOrFail($id);
+        
+        if ($peminjaman->status !== 'menunggu_persetujuan') {
+            return back()->with('error', 'Status peminjaman bukan menunggu persetujuan.');
+        }
+
+        $peminjaman->update([
+            'status' => 'dipinjam',
+            'tgl_pinjam' => today(),
+        ]);
+
+        return back()->with('success', 'Peminjaman disetujui.');
+    }
+
+    public function reject($id)
+    {
+        $peminjaman = Peminjaman::with('buku')->findOrFail($id);
+        
+        if ($peminjaman->status !== 'menunggu_persetujuan') {
+            return back()->with('error', 'Status peminjaman bukan menunggu persetujuan.');
+        }
+
+        $peminjaman->update([
+            'status' => 'ditolak',
+        ]);
+
+        // Kembalikan reservasi stok
+        $peminjaman->buku->increment('stok');
+
+        return back()->with('success', 'Peminjaman ditolak. Stok buku telah dikembalikan.');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'tgl_kembali_rencana' => 'required|date',
+            'denda'               => 'nullable|numeric|min:0'
+        ]);
+
+        $peminjaman = Peminjaman::findOrFail($id);
+        
+        $peminjaman->update([
+            'tgl_kembali_rencana' => $request->tgl_kembali_rencana,
+            'denda'               => $request->denda ?? 0,
+        ]);
+
+        // Jika statusnya terlambat, periksa apakah dengan tgl baru jadi tidak terlambat
+        if ($peminjaman->status === 'terlambat' && today()->lte($request->tgl_kembali_rencana)) {
+            $peminjaman->update(['status' => 'dipinjam']);
+        }
+
+        return back()->with('success', 'Transaksi berhasil diperbarui (Tanggal & Denda).');
+    }
+
     public function kembalikan(Request $request, $id)
     {
         $peminjaman = Peminjaman::with('buku')->findOrFail($id);
@@ -115,11 +183,14 @@ class TransaksiController extends Controller
         }
 
         $tglKembali = $request->tgl_kembali_aktual ? Carbon::parse($request->tgl_kembali_aktual) : Carbon::today();
-        $denda = 0;
+        
+        // Ambil denda yang ada, jika admin sudah atur di form edit sebelumnya
+        $denda = $peminjaman->denda;
 
-        if ($tglKembali->gt($peminjaman->tgl_kembali_rencana)) {
+        // Hanya hitung denda otomatis 5000/hari JIKA admin belum mengatur denda manual / dendanya 0
+        if ($denda == 0 && $tglKembali->gt($peminjaman->tgl_kembali_rencana)) {
             $hari  = $peminjaman->tgl_kembali_rencana->diffInDays($tglKembali);
-            $denda = $hari * 1000;
+            $denda = $hari * 5000;
         }
 
         $peminjaman->update([

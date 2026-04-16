@@ -28,6 +28,9 @@ Route::get('/', fn() => redirect()->route('login'));
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 
+Route::get('/verify-otp', [AuthController::class, 'showVerifyOtp'])->name('login.verify-otp');
+Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->name('login.verify-otp.post');
+
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 
@@ -43,6 +46,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
 
     // Buku
     Route::resource('buku', BukuController::class);
+    Route::post('/buku/import', [BukuController::class, 'importExcel'])->name('buku.import');
+    Route::get('/buku/template/download', [BukuController::class, 'downloadTemplate'])->name('buku.template');
 
     // Anggota
     Route::resource('anggota', AnggotaController::class)->parameters([
@@ -56,6 +61,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');
     Route::get('/transaksi/create', [TransaksiController::class, 'create'])->name('transaksi.create');
     Route::post('/transaksi', [TransaksiController::class, 'store'])->name('transaksi.store');
+    Route::post('/transaksi/{id}/approve', [TransaksiController::class, 'approve'])->name('transaksi.approve');
+    Route::post('/transaksi/{id}/reject', [TransaksiController::class, 'reject'])->name('transaksi.reject');
+    Route::put('/transaksi/{id}', [TransaksiController::class, 'update'])->name('transaksi.update');
     Route::post('/transaksi/{id}/kembalikan', [TransaksiController::class, 'kembalikan'])->name('transaksi.kembalikan');
     Route::delete('/transaksi/{id}', [TransaksiController::class, 'destroy'])->name('transaksi.destroy');
     Route::get('/transaksi/export/{type}', [TransaksiController::class, 'exportTransaksi'])->name('transaksi.export');

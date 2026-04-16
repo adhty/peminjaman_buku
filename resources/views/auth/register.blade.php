@@ -258,14 +258,7 @@
                         @error('name')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Username</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-at"></i></span>
-                            <input type="text" name="username" class="form-control shadow-none @error('username') is-invalid @enderror" value="{{ old('username') }}" placeholder="Pilih username unik" required>
-                        </div>
-                        @error('username')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                    </div>
+
 
                     <div class="mb-3">
                         <label class="form-label">Email Aktif</label>

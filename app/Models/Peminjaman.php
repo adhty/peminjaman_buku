@@ -40,10 +40,23 @@ class Peminjaman extends Model
 
     public function hitungDenda(): int
     {
+        // Prioritaskan denda manual atau denda yang sudah permanen/lunas (sudah dikembalikan)
+        if ($this->denda > 0) {
+            return $this->denda;
+        }
+
+        // Jika buku sudah dikembalikan secara telat (tapi sistem denda nya 0 sebelumnya)
         if ($this->tgl_kembali_aktual && $this->tgl_kembali_aktual->gt($this->tgl_kembali_rencana)) {
             $hari = $this->tgl_kembali_rencana->diffInDays($this->tgl_kembali_aktual);
-            return $hari * 1000; // Rp 1.000 per hari
+            return $hari * 5000;
         }
+
+        // Jika buku belum dikembalikan (denda sementara masih berjalan)
+        if (!$this->tgl_kembali_aktual && today()->gt($this->tgl_kembali_rencana)) {
+            $hari = $this->tgl_kembali_rencana->diffInDays(today());
+            return $hari * 5000;
+        }
+
         return 0;
     }
 

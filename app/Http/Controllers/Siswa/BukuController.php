@@ -71,11 +71,11 @@ class BukuController extends Controller
         // Cek apakah siswa masih meminjam buku yang sama
         $sedangDipinjam = Peminjaman::where('anggota_id', $user->anggota->id)
                                     ->where('buku_id', $buku->id)
-                                    ->whereIn('status', ['dipinjam', 'terlambat'])
+                                    ->whereIn('status', ['menunggu_persetujuan', 'dipinjam', 'terlambat'])
                                     ->exists();
 
         if ($sedangDipinjam) {
-            return back()->with('error', 'Anda masih meminjam buku ini. Selesaikan peminjaman sebelumnya terlebih dahulu.');
+            return back()->with('error', 'Anda masih memiliki permintaan atau peminjaman aktif untuk buku ini.');
         }
 
         // Buat transaksi peminjaman (Batas Tanggal Kustom)
@@ -84,11 +84,11 @@ class BukuController extends Controller
             'buku_id'             => $buku->id,
             'tgl_pinjam'          => today(),
             'tgl_kembali_rencana' => $request->tgl_kembali_rencana,
-            'status'              => 'dipinjam',
+            'status'              => 'menunggu_persetujuan',
         ]);
 
         $buku->decrement('stok');
 
-        return redirect()->route('siswa.transaksi.index')->with('success', 'Buku berhasil dipinjam! Pastikan kembalikan tepat waktu.');
+        return redirect()->route('siswa.transaksi.index')->with('success', 'Permintaan buku berhasil dikirim! Harap tunggu persetujuan dari Admin.');
     }
 }

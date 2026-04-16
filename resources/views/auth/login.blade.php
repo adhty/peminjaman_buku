@@ -265,12 +265,12 @@
                 <form method="POST" action="{{ route('login.post') }}">
                     @csrf
                     <div class="mb-3">
-                        <label class="form-label">Username</label>
+                        <label class="form-label">Email Aktif</label>
                         <div class="input-group">
-                            <span class="input-group-text"><i class="bi bi-person"></i></span>
-                            <input type="text" name="username" class="form-control shadow-none @error('username') is-invalid @enderror" value="{{ old('username') }}" placeholder="Masukkan username" required autofocus>
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input type="email" name="email" class="form-control shadow-none @error('email') is-invalid @enderror" value="{{ old('email') }}" placeholder="Masukkan email aktif Anda" required autofocus>
                         </div>
-                        @error('username')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                        @error('email')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="mb-4">
@@ -292,11 +292,11 @@
                     </button>
                     
                     <div class="admin-hint">
-                        <i class="bi bi-shield-check me-1"></i> Admin: admin / admin123
+                        <i class="bi bi-shield-check me-1"></i> Admin: admin@perpustakaan.com / admin123
                     </div>
 
                     <div class="user-hint mb-4">
-                        <i class="bi bi-person-check me-1"></i> User: siswa1 / siswa123
+                        <i class="bi bi-person-check me-1"></i> User: ahmad@sekolah.com / siswa123
                     </div>
 
                     <div class="text-center mt-4 pt-3 border-top" style="font-size: 0.95rem; color: #64748b;">

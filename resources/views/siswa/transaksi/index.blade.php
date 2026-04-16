@@ -11,9 +11,11 @@
     <form action="{{ route('siswa.transaksi.index') }}" method="GET" class="d-flex gap-2">
         <select name="status" class="form-select border-0 shadow-sm" onchange="this.form.submit()">
             <option value="semua" {{ request('status') == 'semua' ? 'selected' : '' }}>Semua Status</option>
+            <option value="menunggu_persetujuan" {{ request('status') == 'menunggu_persetujuan' ? 'selected' : '' }}>Menunggu Persetujuan</option>
             <option value="dipinjam" {{ request('status') == 'dipinjam' ? 'selected' : '' }}>Sedang Dipinjam</option>
             <option value="terlambat" {{ request('status') == 'terlambat' ? 'selected' : '' }}>Terlambat</option>
             <option value="dikembalikan" {{ request('status') == 'dikembalikan' ? 'selected' : '' }}>Selesai</option>
+            <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
         </select>
     </form>
 </div>
@@ -83,31 +85,39 @@
                                 @endif
                             </td>
                             <td>
-                                @if($item->status === 'dipinjam')
+                                @if($item->status === 'menunggu_persetujuan')
+                                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1"><i class="bi bi-hourglass-split me-1"></i> Menunggu...</span>
+                                @elseif($item->status === 'dipinjam')
                                     <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 px-2 py-1"><i class="bi bi-clock me-1"></i> Dipinjam</span>
                                 @elseif($item->status === 'dikembalikan')
                                     <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1"><i class="bi bi-check2-all me-1"></i> Selesai</span>
                                 @elseif($item->status === 'terlambat')
                                     <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-2 py-1"><i class="bi bi-exclamation-octagon me-1"></i> Terlambat</span>
+                                @elseif($item->status === 'ditolak')
+                                    <span class="badge bg-dark bg-opacity-10 text-dark border border-dark border-opacity-25 px-2 py-1"><i class="bi bi-x-circle me-1"></i> Ditolak</span>
                                 @endif
 
                                 @if($item->denda > 0)
                                     <div class="small text-danger fw-semibold mt-2">Denda: Rp {{ number_format($item->denda, 0, ',', '.') }}</div>
                                 @elseif($item->status === 'terlambat')
-                                    @php $dendaSementara = $item->tgl_kembali_rencana->diffInDays(today()) * 1000; @endphp
+                                    @php $dendaSementara = $item->tgl_kembali_rencana->diffInDays(today()) * 5000; @endphp
                                     <div class="small text-danger fw-semibold mt-2" title="Denda terus berjalan hingga dikembalikan">Denda: Rp {{ number_format($dendaSementara, 0, ',', '.') }}*</div>
                                 @endif
                             </td>
                             <td class="text-center pe-4">
-                                @if($item->status !== 'dikembalikan')
+                                @if(in_array($item->status, ['dipinjam', 'terlambat']))
                                     <form action="{{ route('siswa.transaksi.kembalikan', $item->id) }}" method="POST">
                                         @csrf
                                         <button type="button" onclick="confirmKembali(this.form, '{{ addslashes($item->buku->judul) }}')" class="btn btn-outline-success btn-sm rounded-pill fw-semibold px-3" title="Akhiri peminjaman">
                                             Kembalikan
                                         </button>
                                     </form>
-                                @else
+                                @elseif($item->status === 'dikembalikan')
                                     <button class="btn btn-light btn-sm rounded-pill px-3 text-muted disabled" style="background-color: transparent; border: 1px dashed #cbd5e1;">Tuntas</button>
+                                @elseif($item->status === 'menunggu_persetujuan')
+                                    <span class="small text-muted fst-italic">Menunggu...</span>
+                                @elseif($item->status === 'ditolak')
+                                    <span class="small text-danger fst-italic">Ditolak</span>
                                 @endif
                             </td>
                         </tr>

@@ -14,6 +14,13 @@
     </a>
 </div>
 
+<div class="alert alert-warning bg-warning bg-opacity-10 border border-warning border-opacity-50 shadow-sm d-flex align-items-center mb-4" role="alert" style="max-width: 800px;">
+    <i class="bi bi-exclamation-triangle-fill text-warning flex-shrink-0 me-3" style="font-size: 1.5rem;"></i>
+    <div class="text-dark">
+        <strong>Aturan Denda Perpustakaan:</strong> Membawa buku melewati batas peminjaman dikenakan otomatis <strong>Rp 5.000 / Hari</strong>. Terdapat fitur baru per hari ini Admin dapat mengatur jumlah denda manual tertentu jika siswa menghilangkan, menghilangkan halaman, atau merusak buku.
+    </div>
+</div>
+
 <div class="card shadow-sm border-0" style="max-width: 800px;">
     <div class="card-body p-4">
         <form action="{{ route('admin.buku.store') }}" method="POST" enctype="multipart/form-data">
