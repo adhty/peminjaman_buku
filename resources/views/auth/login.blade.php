@@ -282,9 +282,12 @@
                         @error('password')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                     </div>
 
-                    <div class="mb-4 form-check">
-                        <input type="checkbox" class="form-check-input" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                        <label class="form-check-label text-muted" for="remember">Ingat saya</label>
+                    <div class="mb-4 d-flex justify-content-between align-items-center">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                            <label class="form-check-label text-muted small" for="remember">Ingat saya</label>
+                        </div>
+                        <a href="{{ route('password.request') }}" class="text-decoration-none small fw-semibold" style="color: #4f46e5;">Lupa password?</a>
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100">

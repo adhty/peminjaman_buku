@@ -6,6 +6,8 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\TransaksiController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PasswordResetController;
+
 
 use App\Http\Controllers\Siswa\BukuController as SiswaBukuController;
 use App\Http\Controllers\Siswa\DashboardController as SiswaDashboardController;
@@ -35,6 +37,19 @@ Route::get('/register', [AuthController::class, 'showRegister'])->name('register
 Route::post('/register', [AuthController::class, 'register'])->name('register.post');
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// ======================
+// PASSWORD RESET (OTP)
+// ======================
+Route::get('/forgot-password', [PasswordResetController::class, 'showForgotPassword'])->name('password.request');
+Route::post('/forgot-password', [PasswordResetController::class, 'sendResetOtp'])->name('password.email');
+
+Route::get('/reset-password/verify', [PasswordResetController::class, 'showVerifyOtp'])->name('password.verify-otp');
+Route::post('/reset-password/verify', [PasswordResetController::class, 'verifyOtp'])->name('password.verify-otp.post');
+
+Route::get('/reset-password/new', [PasswordResetController::class, 'showResetPassword'])->name('password.reset');
+Route::post('/reset-password/new', [PasswordResetController::class, 'resetPassword'])->name('password.update');
+
 
 
 // ======================
