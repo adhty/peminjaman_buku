@@ -104,7 +104,8 @@ class BukuController extends Controller
     public function edit(Buku $buku)
     {
         $kategoris = \App\Models\Kategori::orderBy('nama')->get();
-        return view('admin.buku.edit', compact('buku', 'kategoris'));
+        $selectedKategoris = $buku->kategoris->pluck('id')->toArray();
+        return view('admin.buku.edit', compact('buku', 'kategoris', 'selectedKategoris'));
     }
 
     public function update(Request $request, Buku $buku)
