@@ -13,8 +13,8 @@ class BukuTemplateExport implements FromArray, WithHeadings, WithStyles
     {
         // Contoh data sesuai kolom wajib
         return [
-            ['BK001', 'Laskar Pelangi', 'Andrea Hirata', 'Bentang Pustaka', 2005, 'Novel', 'Novel inspiratif dari Belitung', 5],
-            ['BK002', 'Bumi Manusia',   'Pramoedya Ananta Toer', 'Lentera Dipantara', 1980, 'Sastra', '', 3],
+            ['BK001', 'Laskar Pelangi', 'Andrea Hirata', 'Bentang Pustaka', 2005, 'Novel, Inspirasi, Bestseller', 'Novel inspiratif dari Belitung', 5],
+            ['BK002', 'Arduino for Beginners', 'John Doe', 'Tech Press', 2022, 'Teknologi, Elektronik, Alat', 'Panduan belajar Arduino dasar', 3],
         ];
     }
 

@@ -24,34 +24,52 @@ class BukuImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnErro
             return null;
         }
 
-        // Jika kode sudah ada, update stok saja (upsert style)
-        $existing = Buku::where('kode_buku', $row['kode_buku'])->first();
-        if ($existing) {
-            $existing->update([
-                'judul'        => $row['judul']        ?? $existing->judul,
-                'pengarang'    => $row['pengarang']    ?? $existing->pengarang,
-                'penerbit'     => $row['penerbit']     ?? $existing->penerbit,
-                'tahun_terbit' => $row['tahun_terbit'] ?? $existing->tahun_terbit,
-                'kategori'     => $row['kategori']     ?? $existing->kategori,
-                'deskripsi'    => $row['deskripsi']    ?? $existing->deskripsi,
-                'stok'         => $row['stok']         ?? $existing->stok,
-            ]);
-            $this->skipped++;
-            return null;
-        }
-
-        $this->imported++;
-
-        return new Buku([
+        $data = [
             'kode_buku'    => $row['kode_buku'],
             'judul'        => $row['judul'],
             'pengarang'    => $row['pengarang']    ?? '-',
             'penerbit'     => $row['penerbit']     ?? '-',
             'tahun_terbit' => $row['tahun_terbit'] ?? date('Y'),
-            'kategori'     => $row['kategori']     ?? 'Umum',
             'deskripsi'    => $row['deskripsi']    ?? null,
             'stok'         => $row['stok']         ?? 1,
-        ]);
+        ];
+
+        // Handle string kategori (kompatibilitas lama)
+        $kategoriRaw = $row['kategori'] ?? 'Umum';
+        $data['kategori'] = $kategoriRaw; // Simpan as-is di kolom kategori
+
+        $buku = Buku::where('kode_buku', $row['kode_buku'])->first();
+        
+        if ($existing = $buku) {
+            $existing->update($data);
+            $this->skipped++;
+            $buku = $existing;
+        } else {
+            $buku = Buku::create($data);
+            $this->imported++;
+        }
+
+        // --- SYNC MANY TO MANY CATEGORIES ---
+        // Split kategori by comma/semicolon (e.g., "Novel, Sains; Horor")
+        $names = preg_split('/[,;]/', $kategoriRaw);
+        $kategoriIds = [];
+
+        foreach ($names as $name) {
+            $name = trim($name);
+            if ($name !== '') {
+                $kat = \App\Models\Kategori::firstOrCreate(
+                    ['nama' => $name],
+                    ['slug' => \Illuminate\Support\Str::slug($name)]
+                );
+                $kategoriIds[] = $kat->id;
+            }
+        }
+
+        if (!empty($kategoriIds)) {
+            $buku->kategoris()->sync($kategoriIds);
+        }
+
+        return null; // Return null karena kita sudah handle create/update secara manual
     }
 
     public function rules(): array
