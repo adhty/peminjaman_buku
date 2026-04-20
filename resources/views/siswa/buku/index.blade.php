@@ -10,17 +10,17 @@
     </div>
     <div class="col-lg-6">
         <form action="{{ route('siswa.buku.index') }}" method="GET" class="d-flex gap-2">
-            <select name="kategori" class="form-select border-0 shadow-sm" style="max-width: 150px;">
+            <select name="kategori_id" class="form-select border-0 shadow-sm" style="max-width: 150px;">
                 <option value="">Semua Kategori</option>
                 @foreach($kategori as $kat)
-                    <option value="{{ $kat }}" {{ request('kategori') == $kat ? 'selected' : '' }}>{{ $kat }}</option>
+                    <option value="{{ $kat->id }}" {{ request('kategori_id') == $kat->id ? 'selected' : '' }}>{{ $kat->nama }}</option>
                 @endforeach
             </select>
             <div class="input-group shadow-sm border-0 rounded">
                 <input type="text" name="search" class="form-control border-0" placeholder="Pencarian judul, pengarang..." value="{{ request('search') }}">
                 <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
             </div>
-            @if(request()->hasAny(['search', 'kategori']))
+            @if(request()->hasAny(['search', 'kategori_id']))
                 <a href="{{ route('siswa.buku.index') }}" class="btn btn-light shadow-sm" title="Reset Filter"><i class="bi bi-x-lg"></i></a>
             @endif
         </form>
@@ -41,8 +41,12 @@
         <div class="col-xl-3 col-lg-4 col-md-6">
             <div class="card h-100 border-0 shadow-sm hover-elevate position-relative" style="transition: transform 0.2s, box-shadow 0.2s; overflow: hidden;">
                 <!-- Kategori Badge -->
-                <div class="position-absolute top-0 end-0 m-3 z-index-1">
-                    <span class="badge bg-primary bg-opacity-90 px-3 py-2 rounded-pill shadow-sm">{{ $item->kategori }}</span>
+                <div class="position-absolute top-0 end-0 m-3 z-index-1 d-flex flex-column align-items-end gap-1">
+                    @forelse($item->kategoris as $kat)
+                        <span class="badge bg-primary bg-opacity-90 px-3 py-2 rounded-pill shadow-sm">{{ $kat->nama }}</span>
+                    @empty
+                        <span class="badge bg-secondary bg-opacity-90 px-3 py-2 rounded-pill shadow-sm">{{ $item->kategori ?: 'Lainnya' }}</span>
+                    @endforelse
                 </div>
 
                 <!-- Cover Buku -->

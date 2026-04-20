@@ -34,7 +34,11 @@
         <div class="col-md-7 col-lg-8">
             <div class="card-body p-4 p-lg-5">
                 <div class="d-flex flex-wrap gap-2 mb-3">
-                    <span class="badge bg-primary px-3 py-2 rounded-pill fs-6 fw-normal">{{ $buku->kategori }}</span>
+                    @forelse($buku->kategoris as $kat)
+                        <span class="badge bg-primary px-3 py-2 rounded-pill fs-6 fw-normal">{{ $kat->nama }}</span>
+                    @empty
+                        <span class="badge bg-secondary px-3 py-2 rounded-pill fs-6 fw-normal">{{ $buku->kategori ?: 'Lainnya' }}</span>
+                    @endforelse
                     @if($buku->stok > 0)
                         <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill fs-6 fw-normal"><i class="bi bi-check2-circle me-1"></i>Tersedia ({{ $buku->stok }})</span>
                     @else

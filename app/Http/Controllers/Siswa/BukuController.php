@@ -16,23 +16,27 @@ class BukuController extends Controller
             return redirect()->route('siswa.profil.create')->with('warning', 'Silakan lengkapi profil Anda.');
         }
 
-        $query = Buku::query();
+        $query = Buku::with('kategoris');
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('judul', 'like', "%{$search}%")
                   ->orWhere('pengarang', 'like', "%{$search}%")
-                  ->orWhere('kategori', 'like', "%{$search}%");
+                  ->orWhereHas('kategoris', function($sub) use ($search) {
+                      $sub->where('nama', 'like', "%{$search}%");
+                  });
             });
         }
 
-        if ($request->filled('kategori')) {
-            $query->where('kategori', $request->kategori);
+        if ($request->filled('kategori_id')) {
+            $query->whereHas('kategoris', function($q) use ($request) {
+                $q->where('kategoris.id', $request->kategori_id);
+            });
         }
 
         $buku = $query->latest()->paginate(12)->withQueryString();
-        $kategori = Buku::select('kategori')->distinct()->pluck('kategori');
+        $kategori = \App\Models\Kategori::orderBy('nama')->get();
 
         return view('siswa.buku.index', compact('buku', 'kategori'));
     }
