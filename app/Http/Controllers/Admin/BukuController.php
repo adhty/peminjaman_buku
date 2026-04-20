@@ -14,7 +14,7 @@ class BukuController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Buku::query();
+        $query = Buku::with('kategoris');
 
         // Text search
         if ($request->filled('search')) {
@@ -27,9 +27,11 @@ class BukuController extends Controller
             });
         }
 
-        // Category filter
-        if ($request->filled('kategori')) {
-            $query->where('kategori', $request->kategori);
+        // Category filter (Many-to-Many)
+        if ($request->filled('kategori_id')) {
+            $query->whereHas('kategoris', function ($q) use ($request) {
+                $q->where('kategoris.id', $request->kategori_id);
+            });
         }
 
         // Stock status filter
@@ -44,8 +46,8 @@ class BukuController extends Controller
         $perPage = $request->input('per_page', 10);
         $buku = $query->latest()->paginate($perPage)->withQueryString();
 
-        // Get distinct categories for filter dropdown
-        $kategoriList = Buku::select('kategori')->distinct()->orderBy('kategori')->pluck('kategori');
+        // Get all categories for filter dropdown
+        $kategoriList = \App\Models\Kategori::orderBy('nama')->get();
 
         // Count stats
         $totalBuku = Buku::count();
@@ -62,7 +64,8 @@ class BukuController extends Controller
 
     public function create()
     {
-        return view('admin.buku.create');
+        $kategoris = \App\Models\Kategori::orderBy('nama')->get();
+        return view('admin.buku.create', compact('kategoris'));
     }
 
     public function store(Request $request)
@@ -73,7 +76,8 @@ class BukuController extends Controller
             'pengarang'    => 'required|max:100',
             'penerbit'     => 'required|max:100',
             'tahun_terbit' => 'required|digits:4|integer|min:1900|max:' . date('Y'),
-            'kategori'     => 'required|max:50',
+            'kategori_ids' => 'required|array|min:1',
+            'kategori_ids.*' => 'exists:kategoris,id',
             'deskripsi'    => 'nullable|string',
             'stok'         => 'required|integer|min:0',
             'cover'        => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
@@ -81,20 +85,26 @@ class BukuController extends Controller
             'kode_buku.unique' => 'Kode buku sudah digunakan.',
         ]);
 
-        $data = $request->all();
+        $data = $request->except('kategori_ids');
+
+        // Simpan kategori pertama sebagai string kategori (agar kompatibel)
+        $firstKategori = \App\Models\Kategori::find($request->kategori_ids[0]);
+        $data['kategori'] = $firstKategori ? $firstKategori->nama : '-';
 
         if ($request->hasFile('cover')) {
             $data['cover'] = $request->file('cover')->store('buku_covers', 'public');
         }
 
-        Buku::create($data);
+        $buku = Buku::create($data);
+        $buku->kategoris()->sync($request->kategori_ids);
 
         return redirect()->route('admin.buku.index')->with('success', 'Buku berhasil ditambahkan.');
     }
 
     public function edit(Buku $buku)
     {
-        return view('admin.buku.edit', compact('buku'));
+        $kategoris = \App\Models\Kategori::orderBy('nama')->get();
+        return view('admin.buku.edit', compact('buku', 'kategoris'));
     }
 
     public function update(Request $request, Buku $buku)
@@ -105,13 +115,18 @@ class BukuController extends Controller
             'pengarang'    => 'required|max:100',
             'penerbit'     => 'required|max:100',
             'tahun_terbit' => 'required|digits:4|integer|min:1900|max:' . date('Y'),
-            'kategori'     => 'required|max:50',
+            'kategori_ids' => 'required|array|min:1',
+            'kategori_ids.*' => 'exists:kategoris,id',
             'deskripsi'    => 'nullable|string',
             'stok'         => 'required|integer|min:0',
             'cover'        => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $data = $request->all();
+        $data = $request->except('kategori_ids');
+
+        // Simpan kategori pertama sebagai string kategori (agar kompatibel)
+        $firstKategori = \App\Models\Kategori::find($request->kategori_ids[0]);
+        $data['kategori'] = $firstKategori ? $firstKategori->nama : '-';
 
         if ($request->hasFile('cover')) {
             if ($buku->cover) {
@@ -121,6 +136,7 @@ class BukuController extends Controller
         }
 
         $buku->update($data);
+        $buku->kategoris()->sync($request->kategori_ids);
 
         return redirect()->route('admin.buku.index')->with('success', 'Data buku berhasil diperbarui.');
     }

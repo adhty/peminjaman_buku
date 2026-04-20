@@ -37,11 +37,11 @@
                 {{-- Kategori --}}
                 <div class="col-12 col-md-3">
                     <label class="form-label small text-muted mb-1 fw-semibold">Kategori</label>
-                    <select name="kategori" class="form-select">
+                    <select name="kategori_id" class="form-select">
                         <option value="">-- Semua Kategori --</option>
                         @foreach($kategoriList as $kat)
-                            <option value="{{ $kat }}" {{ request('kategori') == $kat ? 'selected' : '' }}>
-                                {{ $kat }}
+                            <option value="{{ $kat->id }}" {{ request('kategori_id') == $kat->id ? 'selected' : '' }}>
+                                {{ $kat->nama }}
                             </option>
                         @endforeach
                     </select>
@@ -79,7 +79,7 @@
             </div>
 
             {{-- Active Filter Badges --}}
-            @if(request('search') || request('kategori') || request('stok_status'))
+            @if(request('search') || request('kategori_id') || request('stok_status'))
             <div class="mt-2 d-flex flex-wrap gap-1 align-items-center">
                 <small class="text-muted me-1">Filter aktif:</small>
                 @if(request('search'))
@@ -87,10 +87,13 @@
                         <i class="bi bi-search me-1"></i>{{ request('search') }}
                     </span>
                 @endif
-                @if(request('kategori'))
+                @if(request('kategori_id'))
+                    @php $activeKat = $kategoriList->where('id', request('kategori_id'))->first(); @endphp
+                    @if($activeKat)
                     <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1">
-                        <i class="bi bi-tag me-1"></i>{{ request('kategori') }}
+                        <i class="bi bi-tag me-1"></i>{{ $activeKat->nama }}
                     </span>
+                    @endif
                 @endif
                 @if(request('stok_status'))
                     <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-2 py-1">
@@ -157,11 +160,15 @@
                             </td>
                             <td>{{ $item->pengarang }}</td>
                             <td>
-                                <a href="{{ route('admin.buku.index', array_merge(request()->query(), ['kategori' => $item->kategori])) }}"
-                                   class="badge bg-primary bg-opacity-10 text-primary text-decoration-none"
-                                   title="Filter kategori ini">
-                                    {{ $item->kategori }}
-                                </a>
+                                @forelse($item->kategoris as $kat)
+                                    <a href="{{ route('admin.buku.index', ['kategori_id' => $kat->id]) }}"
+                                       class="badge bg-primary bg-opacity-10 text-primary text-decoration-none mb-1"
+                                       title="Filter kategori {{ $kat->nama }}">
+                                        {{ $kat->nama }}
+                                    </a>
+                                @empty
+                                    <span class="text-muted small"><em>{{ $item->kategori ?: 'Tanpa Kategori' }}</em></span>
+                                @endforelse
                             </td>
                             <td>
                                 @if($item->stok > 0)

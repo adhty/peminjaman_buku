@@ -27,18 +27,31 @@
                     @error('kode_buku')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-12">
                     <label class="form-label fw-semibold">Kategori <span class="text-danger">*</span></label>
-                    <select name="kategori" class="form-select @error('kategori') is-invalid @enderror" required>
-                        <option value="Novel" {{ old('kategori', $buku->kategori) == 'Novel' ? 'selected' : '' }}>Novel</option>
-                        <option value="Teknologi" {{ old('kategori', $buku->kategori) == 'Teknologi' ? 'selected' : '' }}>Teknologi / IT</option>
-                        <option value="Sains" {{ old('kategori', $buku->kategori) == 'Sains' ? 'selected' : '' }}>Sains & Alam</option>
-                        <option value="Sejarah" {{ old('kategori', $buku->kategori) == 'Sejarah' ? 'selected' : '' }}>Sejarah</option>
-                        <option value="Matematika" {{ old('kategori', $buku->kategori) == 'Matematika' ? 'selected' : '' }}>Matematika</option>
-                        <option value="Bahasa" {{ old('kategori', $buku->kategori) == 'Bahasa' ? 'selected' : '' }}>Bahasa & Sastra</option>
-                        <option value="Lainnya" {{ old('kategori', $buku->kategori) == 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
-                    </select>
-                    @error('kategori')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="card bg-light border-0">
+                        <div class="card-body p-3">
+                            <div class="row g-2">
+                                @forelse($kategoris as $kat)
+                                    <div class="col-md-4 col-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="kategori_ids[]" 
+                                                value="{{ $kat->id }}" id="kat_{{ $kat->id }}"
+                                                {{ (is_array(old('kategori_ids', $selectedKategoris)) && in_array($kat->id, old('kategori_ids', $selectedKategoris))) ? 'checked' : '' }}>
+                                            <label class="form-check-label small" for="kat_{{ $kat->id }}">
+                                                {{ $kat->nama }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div class="col-12 text-muted small italic">
+                                        Belum ada kategori. Silakan <a href="{{ route('admin.kategori.index') }}">tambah kategori</a> terlebih dahulu.
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
+                    @error('kategori_ids')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
                 </div>
             </div>
 

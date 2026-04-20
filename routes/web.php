@@ -64,6 +64,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::post('/buku/import', [BukuController::class, 'importExcel'])->name('buku.import');
     Route::get('/buku/template/download', [BukuController::class, 'downloadTemplate'])->name('buku.template');
 
+    // Kategori
+    Route::resource('kategori', \App\Http\Controllers\Admin\KategoriController::class);
+
     // Anggota
     Route::resource('anggota', AnggotaController::class)->parameters([
         'anggota' => 'anggota'

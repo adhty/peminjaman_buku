@@ -28,6 +28,11 @@ class Buku extends Model
         return $this->hasMany(Peminjaman::class);
     }
 
+    public function kategoris()
+    {
+        return $this->belongsToMany(Kategori::class, 'buku_kategori', 'buku_id', 'kategori_id');
+    }
+
     public function isAvailable(): bool
     {
         return $this->stok > 0;

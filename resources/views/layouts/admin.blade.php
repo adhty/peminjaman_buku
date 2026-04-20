@@ -252,6 +252,11 @@
                 </a>
             </li>
             <li>
+                <a href="{{ route('admin.kategori.index') }}" class="{{ request()->routeIs('admin.kategori.*') ? 'active' : '' }}">
+                    <i class="bi bi-tags"></i> <span>Data Kategori</span>
+                </a>
+            </li>
+            <li>
                 <a href="{{ route('admin.anggota.index') }}" class="{{ request()->routeIs('admin.anggota.*') ? 'active' : '' }}">
                     <i class="bi bi-people"></i> <span>Kelola Anggota</span>
                 </a>
