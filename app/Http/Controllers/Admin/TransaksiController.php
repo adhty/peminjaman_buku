@@ -23,7 +23,7 @@ class TransaksiController extends Controller
                   ->update(['status' => 'terlambat']);
 
         $query = Peminjaman::with(['anggota', 'buku'])
-            ->whereIn('status', ['dipinjam', 'terlambat']);
+            ->whereIn('status', ['dipinjam', 'terlambat', 'dikembalikan']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -34,7 +34,12 @@ class TransaksiController extends Controller
             });
         }
 
-        $transaksi = $query->orderBy('tgl_kembali_rencana')
+        $transaksi = $query->orderByRaw("CASE 
+                WHEN status = 'terlambat' THEN 1 
+                WHEN status = 'dipinjam' THEN 2 
+                ELSE 3 
+            END")
+            ->orderBy('tgl_kembali_rencana', 'asc')
             ->paginate(15)
             ->withQueryString();
 

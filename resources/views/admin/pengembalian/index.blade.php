@@ -252,6 +252,7 @@
 
     .badge-active { background: var(--primary-soft); color: var(--primary); }
     .badge-late { background: #fef2f2; color: var(--danger); }
+    .badge-success { background: #f0fdf4; color: var(--success); }
 
     .btn-return {
         background: linear-gradient(135deg, var(--success) 0%, #166534 100%);
@@ -420,7 +421,7 @@
     <div class="table-header">
         <h6>
             <i class="fas fa-list me-2" style="color: var(--primary);"></i>
-            Daftar Buku Belum Dikembalikan
+            Daftar Transaksi & Riwayat Pengembalian
         </h6>
         <form action="{{ route('admin.pengembalian.index') }}" method="GET">
             <div class="position-relative">
@@ -433,11 +434,17 @@
     <div class="card-body p-0">
         @if($transaksi->isEmpty())
             <div class="empty-state">
-                <div class="empty-icon">
-                    <i class="fas fa-check-circle"></i>
+                <div class="empty-icon" style="background: var(--primary-soft);">
+                    <i class="fas fa-{{ request('search') ? 'search' : 'clipboard-list' }}" style="color: var(--primary);"></i>
                 </div>
-                <h6 class="fw-semibold mb-2" style="color: var(--primary-dark);">Semua Buku Sudah Kembali!</h6>
-                <p class="text-muted small mb-0">Tidak ada peminjaman aktif saat ini.</p>
+                <h6 class="fw-semibold mb-2" style="color: var(--primary-dark);">
+                    {{ request('search') ? 'Data Tidak Ditemukan' : 'Belum Ada Data Transaksi' }}
+                </h6>
+                <p class="text-muted small mb-0">
+                    {{ request('search') 
+                        ? 'Tidak ada hasil untuk "' . request('search') . '". Coba kata kunci lain.' 
+                        : 'Riwayat peminjaman dan pengembalian akan muncul di tabel ini.' }}
+                </p>
             </div>
         @else
             <div class="table-responsive">
@@ -498,13 +505,27 @@
                                         <i class="fas fa-money-bill-wave me-1"></i> 
                                         Rp {{ number_format($item->hitungDenda(), 0, ',', '.') }}
                                     </div>
+                                @elseif($item->status === 'dikembalikan')
+                                    <span class="badge-status badge-success">
+                                        <i class="fas fa-check-circle"></i> Dikembalikan
+                                    </span>
+                                    <div class="small text-success mt-1">
+                                        <i class="fas fa-calendar-check me-1"></i>
+                                        {{ $item->tgl_kembali_aktual->format('d M Y') }}
+                                    </div>
                                 @endif
                             </td>
                             <td class="text-center">
-                                <button type="button" class="btn-return"
-                                    onclick="confirmKembali('{{ route('admin.transaksi.kembalikan', $item->id) }}', '{{ $item->anggota->nama }}', '{{ $item->buku->judul }}')">
-                                    <i class="fas fa-undo-alt me-1"></i> Kembalikan
-                                </button>
+                                @if($item->status !== 'dikembalikan')
+                                    <button type="button" class="btn-return"
+                                        onclick="confirmKembali('{{ route('admin.transaksi.kembalikan', $item->id) }}', '{{ $item->anggota->nama }}', '{{ $item->buku->judul }}')">
+                                        <i class="fas fa-undo-alt me-1"></i> Kembalikan
+                                    </button>
+                                @else
+                                    <span class="text-muted small fw-bold">
+                                        <i class="fas fa-check me-1"></i> Selesai
+                                    </span>
+                                @endif
                             </td>
                         </tr>
                         @endforeach
