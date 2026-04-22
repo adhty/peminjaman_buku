@@ -28,6 +28,12 @@ class Peminjaman extends Model
         'tgl_kembali_aktual' => 'date',
     ];
 
+    /*
+    |--------------------------------------------------------------------------
+    | RELASI
+    |--------------------------------------------------------------------------
+    */
+
     public function anggota()
     {
         return $this->belongsTo(Anggota::class);
@@ -38,21 +44,30 @@ class Peminjaman extends Model
         return $this->belongsTo(Buku::class);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | HITUNG DENDA
+    |--------------------------------------------------------------------------
+    */
+
     public function hitungDenda(): int
     {
-        // Prioritaskan denda manual atau denda yang sudah permanen/lunas (sudah dikembalikan)
+        // ✅ 1. Prioritas denda manual (sudah disimpan di database)
         if ($this->denda > 0) {
             return $this->denda;
         }
 
-        // Jika buku sudah dikembalikan secara telat (tapi sistem denda nya 0 sebelumnya)
-        if ($this->tgl_kembali_aktual && $this->tgl_kembali_aktual->gt($this->tgl_kembali_rencana)) {
-            $hari = $this->tgl_kembali_rencana->diffInDays($this->tgl_kembali_aktual);
-            return $hari * 5000;
+        // ✅ 2. Jika sudah dikembalikan dan terlambat
+        if ($this->tgl_kembali_aktual) {
+            if ($this->tgl_kembali_aktual->gt($this->tgl_kembali_rencana)) {
+                $hari = $this->tgl_kembali_rencana->diffInDays($this->tgl_kembali_aktual);
+                return $hari * 5000;
+            }
+            return 0;
         }
 
-        // Jika buku belum dikembalikan (denda sementara masih berjalan)
-        if (!$this->tgl_kembali_aktual && today()->gt($this->tgl_kembali_rencana)) {
+        // ✅ 3. Jika BELUM dikembalikan (denda berjalan)
+        if (today()->gt($this->tgl_kembali_rencana)) {
             $hari = $this->tgl_kembali_rencana->diffInDays(today());
             return $hari * 5000;
         }
@@ -60,11 +75,31 @@ class Peminjaman extends Model
         return 0;
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | STATUS HELPER
+    |--------------------------------------------------------------------------
+    */
+
     public function isTerlambat(): bool
     {
-        if ($this->status === 'dipinjam') {
-            return Carbon::today()->gt($this->tgl_kembali_rencana);
-        }
-        return false;
+        return $this->status === 'terlambat' ||
+               ($this->status === 'dipinjam' && today()->gt($this->tgl_kembali_rencana));
+    }
+
+    public function isDipinjam(): bool
+    {
+        return $this->status === 'dipinjam';
+    }
+
+    public function isDikembalikan(): bool
+    {
+        return $this->status === 'dikembalikan';
+    }
+
+
+    public function getDendaFormatAttribute(): string
+    {
+        return 'Rp ' . number_format($this->hitungDenda(), 0, ',', '.');
     }
 }

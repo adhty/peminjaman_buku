@@ -34,18 +34,34 @@ class TransaksiController extends Controller
             });
         }
 
-        $transaksi      = $query->orderBy('tgl_kembali_rencana')->paginate(15)->withQueryString();
+        $transaksi = $query->orderBy('tgl_kembali_rencana')
+            ->paginate(15)
+            ->withQueryString();
+
         $dipinjam       = Peminjaman::where('status', 'dipinjam')->count();
         $terlambat      = Peminjaman::where('status', 'terlambat')->count();
         $kembaliHariIni = Peminjaman::where('status', 'dikembalikan')
-                            ->whereDate('tgl_kembali_aktual', today())->count();
+            ->whereDate('tgl_kembali_aktual', today())
+            ->count();
 
-        return view('admin.pengembalian.index', compact('transaksi', 'dipinjam', 'terlambat', 'kembaliHariIni'));
+        // ✅ FIX TAMBAHAN (TIDAK MENGUBAH LOGIC LAIN)
+        $totalDenda = Peminjaman::whereIn('status', ['dipinjam', 'terlambat'])
+            ->get()
+            ->sum(function ($item) {
+                return $item->hitungDenda();
+            });
+
+        return view('admin.pengembalian.index', compact(
+            'transaksi',
+            'dipinjam',
+            'terlambat',
+            'kembaliHariIni',
+            'totalDenda'
+        ));
     }
 
     public function index(Request $request)
     {
-        // Auto-update terlambat
         Peminjaman::where('status', 'dipinjam')
                   ->where('tgl_kembali_rencana', '<', today())
                   ->update(['status' => 'terlambat']);
@@ -121,7 +137,7 @@ class TransaksiController extends Controller
     public function approve($id)
     {
         $peminjaman = Peminjaman::findOrFail($id);
-        
+
         if ($peminjaman->status !== 'menunggu_persetujuan') {
             return back()->with('error', 'Status peminjaman bukan menunggu persetujuan.');
         }
@@ -137,16 +153,13 @@ class TransaksiController extends Controller
     public function reject($id)
     {
         $peminjaman = Peminjaman::with('buku')->findOrFail($id);
-        
+
         if ($peminjaman->status !== 'menunggu_persetujuan') {
             return back()->with('error', 'Status peminjaman bukan menunggu persetujuan.');
         }
 
-        $peminjaman->update([
-            'status' => 'ditolak',
-        ]);
+        $peminjaman->update(['status' => 'ditolak']);
 
-        // Kembalikan reservasi stok
         $peminjaman->buku->increment('stok');
 
         return back()->with('success', 'Peminjaman ditolak. Stok buku telah dikembalikan.');
@@ -156,17 +169,16 @@ class TransaksiController extends Controller
     {
         $request->validate([
             'tgl_kembali_rencana' => 'required|date',
-            'denda'               => 'nullable|numeric|min:0'
+            'denda' => 'nullable|numeric|min:0'
         ]);
 
         $peminjaman = Peminjaman::findOrFail($id);
-        
+
         $peminjaman->update([
             'tgl_kembali_rencana' => $request->tgl_kembali_rencana,
-            'denda'               => $request->denda ?? 0,
+            'denda' => $request->denda ?? 0,
         ]);
 
-        // Jika statusnya terlambat, periksa apakah dengan tgl baru jadi tidak terlambat
         if ($peminjaman->status === 'terlambat' && today()->lte($request->tgl_kembali_rencana)) {
             $peminjaman->update(['status' => 'dipinjam']);
         }
@@ -182,12 +194,12 @@ class TransaksiController extends Controller
             return back()->with('error', 'Buku sudah dikembalikan.');
         }
 
-        $tglKembali = $request->tgl_kembali_aktual ? Carbon::parse($request->tgl_kembali_aktual) : Carbon::today();
-        
-        // Ambil denda yang ada, jika admin sudah atur di form edit sebelumnya
+        $tglKembali = $request->tgl_kembali_aktual
+            ? Carbon::parse($request->tgl_kembali_aktual)
+            : Carbon::today();
+
         $denda = $peminjaman->denda;
 
-        // Hanya hitung denda otomatis 5000/hari JIKA admin belum mengatur denda manual / dendanya 0
         if ($denda == 0 && $tglKembali->gt($peminjaman->tgl_kembali_rencana)) {
             $hari  = $peminjaman->tgl_kembali_rencana->diffInDays($tglKembali);
             $denda = $hari * 5000;
@@ -195,8 +207,8 @@ class TransaksiController extends Controller
 
         $peminjaman->update([
             'tgl_kembali_aktual' => $tglKembali,
-            'status'             => 'dikembalikan',
-            'denda'              => $denda,
+            'status' => 'dikembalikan',
+            'denda' => $denda,
         ]);
 
         $peminjaman->buku->increment('stok');
@@ -214,7 +226,6 @@ class TransaksiController extends Controller
         $peminjaman = Peminjaman::findOrFail($id);
 
         if ($peminjaman->status === 'dipinjam' || $peminjaman->status === 'terlambat') {
-            // Kembalikan stok jika dihapus saat masih dipinjam
             $peminjaman->buku->increment('stok');
         }
 
@@ -232,9 +243,11 @@ class TransaksiController extends Controller
             return Excel::download(new TransaksiExport($status), $filename . '.xlsx');
         } elseif ($type === 'pdf') {
             $transaksi = Peminjaman::with(['anggota', 'buku'])->latest();
+
             if ($status !== 'all') {
                 $transaksi->where('status', $status);
             }
+
             $transaksi = $transaksi->get();
 
             $pdf = Pdf::loadView('admin.transaksi.pdf', compact('transaksi', 'status'));

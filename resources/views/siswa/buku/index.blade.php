@@ -1,104 +1,366 @@
 @extends('layouts.siswa')
 
 @section('title', 'Katalog Buku')
-@section('page-title', 'Katalog Buku')
+@section('page-title', '📚 Katalog Buku')
 
 @section('content')
-<div class="row align-items-center mb-4 g-3">
-    <div class="col-lg-6">
-        <p class="text-muted mb-0">Temukan buku yang ingin Anda baca. Lebih dari ratusan koleksi tersedia.</p>
-    </div>
-    <div class="col-lg-6">
-        <form action="{{ route('siswa.buku.index') }}" method="GET" class="d-flex gap-2">
-            <select name="kategori_id" class="form-select border-0 shadow-sm" style="max-width: 150px;">
-                <option value="">Semua Kategori</option>
-                @foreach($kategori as $kat)
-                    <option value="{{ $kat->id }}" {{ request('kategori_id') == $kat->id ? 'selected' : '' }}>{{ $kat->nama }}</option>
-                @endforeach
-            </select>
-            <div class="input-group shadow-sm border-0 rounded">
-                <input type="text" name="search" class="form-control border-0" placeholder="Pencarian judul, pengarang..." value="{{ request('search') }}">
-                <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
-            </div>
+<style>
+    :root {
+        --primary-dark: #1e3a5f;
+        --primary: #2c5282;
+        --primary-light: #3182ce;
+        --primary-soft: #ebf4ff;
+    }
+
+    .search-section {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+        border-radius: 24px;
+        padding: 32px;
+        margin-bottom: 32px;
+    }
+
+    .search-title {
+        color: white;
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .search-subtitle {
+        color: rgba(255,255,255,0.8);
+        font-size: 14px;
+    }
+
+    .search-input-group {
+        background: white;
+        border-radius: 16px;
+        padding: 4px;
+    }
+
+    .search-input-group .form-control {
+        border: none;
+        padding: 12px 20px;
+        border-radius: 14px;
+    }
+
+    .search-input-group .btn {
+        border-radius: 12px;
+        padding: 10px 24px;
+        background: var(--primary);
+        color: white;
+    }
+
+    .filter-select {
+        background: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        padding: 10px 16px;
+        border-radius: 12px;
+    }
+
+    .filter-select option {
+        background: var(--primary-dark);
+        color: white;
+    }
+
+    /* BOOK CARD - RAPIH */
+    .book-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.3s;
+        border: 1px solid #eef2f6;
+        height: 100%;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .book-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 30px -12px rgba(30, 58, 95, 0.15);
+    }
+
+    .book-cover {
+        height: 200px;
+        background-size: cover;
+        background-position: center;
+        background-color: #f1f5f9;
+        flex-shrink: 0;
+    }
+
+    .book-cover-placeholder {
+        height: 200px;
+        background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .category-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(44, 82, 130, 0.95);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 30px;
+        font-size: 11px;
+        font-weight: 600;
+        z-index: 2;
+    }
+
+    .book-info {
+        padding: 16px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .book-code {
+        font-size: 10px;
+        color: #94a3b8;
+        background: #f1f5f9;
+        padding: 3px 8px;
+        border-radius: 6px;
+        display: inline-block;
+        margin-bottom: 10px;
+        width: fit-content;
+    }
+
+    .book-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin-bottom: 6px;
+        line-height: 1.3;
+    }
+
+    .book-author {
+        font-size: 12px;
+        color: #64748b;
+        margin-bottom: 12px;
+    }
+
+    .stock-info {
+        margin-bottom: 12px;
+    }
+
+    .stock-available {
+        background: #f0fdf4;
+        color: #15803d;
+        padding: 4px 10px;
+        border-radius: 30px;
+        font-size: 11px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .stock-empty {
+        background: #fef2f2;
+        color: #dc2626;
+        padding: 4px 10px;
+        border-radius: 30px;
+        font-size: 11px;
+        font-weight: 600;
+        display: inline-block;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        margin-top: auto;
+    }
+
+    .btn-detail {
+        flex: 1;
+        border: 1.5px solid var(--primary);
+        color: var(--primary);
+        padding: 8px 0;
+        border-radius: 30px;
+        font-size: 12px;
+        font-weight: 600;
+        background: transparent;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.2s;
+    }
+
+    .btn-detail:hover {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-borrow {
+        flex: 1;
+        background: var(--primary);
+        color: white;
+        padding: 8px 0;
+        border-radius: 30px;
+        font-size: 12px;
+        font-weight: 600;
+        border: none;
+        text-align: center;
+        transition: all 0.2s;
+    }
+
+    .btn-borrow:hover {
+        background: var(--primary-dark);
+    }
+
+    .btn-borrow:disabled {
+        background: #cbd5e1;
+        cursor: not-allowed;
+    }
+
+    /* Pagination */
+    .pagination-custom .page-link {
+        border-radius: 10px;
+        margin: 0 4px;
+        border: 1px solid #e2e8f0;
+        color: #4a5568;
+    }
+
+    .pagination-custom .page-item.active .page-link {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .search-section {
+            padding: 20px;
+        }
+        .search-title {
+            font-size: 20px;
+        }
+        .book-cover, .book-cover-placeholder {
+            height: 180px;
+        }
+    }
+</style>
+
+<!-- SEARCH SECTION -->
+<div class="search-section">
+    <div class="row align-items-center">
+        <div class="col-lg-5 mb-4 mb-lg-0">
+            <div class="search-title">Temukan Buku Favoritmu</div>
+            <div class="search-subtitle">Lebih dari 1000+ koleksi buku tersedia untuk Anda baca</div>
+        </div>
+        <div class="col-lg-7">
+            <form action="{{ route('siswa.buku.index') }}" method="GET">
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <select name="kategori_id" class="filter-select w-100" onchange="this.form.submit()">
+                            <option value="">Semua Kategori</option>
+                            @foreach($kategori as $kat)
+                                <option value="{{ $kat->id }}" {{ request('kategori_id') == $kat->id ? 'selected' : '' }}>{{ $kat->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="search-input-group">
+                            <div class="d-flex">
+                                <input type="text" name="search" class="form-control" placeholder="Cari judul buku, pengarang..." value="{{ request('search') }}">
+                                <button class="btn" type="submit">
+                                    <i class="fas fa-search me-1"></i> Cari
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
             @if(request()->hasAny(['search', 'kategori_id']))
-                <a href="{{ route('siswa.buku.index') }}" class="btn btn-light shadow-sm" title="Reset Filter"><i class="bi bi-x-lg"></i></a>
+                <div class="mt-3 text-end">
+                    <a href="{{ route('siswa.buku.index') }}" class="text-white text-decoration-none small">
+                        <i class="fas fa-times-circle me-1"></i> Reset Filter
+                    </a>
+                </div>
             @endif
-        </form>
+        </div>
     </div>
 </div>
 
-@if($buku->isEmpty())
-    <div class="card border-0 shadow-sm">
-        <div class="card-body text-center py-5">
-            <i class="bi bi-search display-1 text-muted opacity-25"></i>
-            <h4 class="mt-4 mb-2">Buku Tidak Ditemukan</h4>
-            <p class="text-muted mb-0">Maaf, kami tidak dapat menemukan buku yang Anda cari. Coba kata kunci atau kategori lain.</p>
+<!-- RESULT INFO -->
+@if(!$buku->isEmpty())
+    <div class="mb-3">
+        <div class="small text-muted">
+            <i class="fas fa-chart-line me-1"></i>
+            Menampilkan {{ $buku->firstItem() }} - {{ $buku->lastItem() }} dari {{ $buku->total() }} buku
         </div>
+    </div>
+@endif
+
+<!-- BOOK GRID -->
+@if($buku->isEmpty())
+    <div class="text-center py-5 bg-white rounded-4">
+        <i class="fas fa-book-open" style="font-size: 64px; color: var(--primary); opacity: 0.3;"></i>
+        <h5 class="fw-bold mt-3" style="color: var(--primary-dark);">Buku Tidak Ditemukan</h5>
+        <p class="text-muted small">Maaf, buku yang Anda cari tidak tersedia.</p>
     </div>
 @else
     <div class="row g-4">
         @foreach($buku as $item)
         <div class="col-xl-3 col-lg-4 col-md-6">
-            <div class="card h-100 border-0 shadow-sm hover-elevate position-relative" style="transition: transform 0.2s, box-shadow 0.2s; overflow: hidden;">
-                <!-- Kategori Badge -->
-                <div class="position-absolute top-0 end-0 m-3 z-index-1 d-flex flex-column align-items-end gap-1">
-                    @forelse($item->kategoris as $kat)
-                        <span class="badge bg-primary bg-opacity-90 px-3 py-2 rounded-pill shadow-sm">{{ $kat->nama }}</span>
-                    @empty
-                        <span class="badge bg-secondary bg-opacity-90 px-3 py-2 rounded-pill shadow-sm">{{ $item->kategori ?: 'Lainnya' }}</span>
-                    @endforelse
+            <div class="book-card">
+                <!-- Category Badge -->
+                <div class="category-badge">
+                    @if($item->kategoris->isNotEmpty())
+                        {{ $item->kategoris->first()->nama }}
+                    @else
+                        Novel
+                    @endif
                 </div>
 
-                <!-- Cover Buku -->
+                <!-- Cover -->
                 @if($item->cover)
-                    <div style="height: 200px; background-image: url('{{ Storage::url($item->cover) }}'); background-size: cover; background-position: center; border-bottom: 1px solid #e2e8f0;"></div>
+                    <div class="book-cover" style="background-image: url('{{ Storage::url($item->cover) }}');"></div>
                 @else
-                    <div class="bg-light d-flex align-items-center justify-content-center border-bottom" style="height: 200px;">
-                        <i class="bi bi-book text-muted opacity-25" style="font-size: 5rem;"></i>
+                    <div class="book-cover-placeholder">
+                        <i class="fas fa-book" style="font-size: 48px; color: var(--primary); opacity: 0.3;"></i>
                     </div>
                 @endif
-                
-                <div class="card-body d-flex flex-column p-4">
-                    <div class="mb-auto">
-                        <small class="text-muted font-monospace d-block mb-2"><i class="bi bi-upc-scan me-1"></i> {{ $item->kode_buku }}</small>
-                        <h5 class="fw-bold mb-1 lh-base">{{ $item->judul }}</h5>
-                        <p class="text-muted small mb-3"><i class="bi bi-pen me-1"></i> {{ $item->pengarang }}</p>
+
+                <!-- Info -->
+                <div class="book-info">
+                    <div class="book-code">
+                        <i class="fas fa-barcode me-1"></i> {{ $item->kode_buku }}
+                    </div>
+                    <div class="book-title">{{ $item->judul }}</div>
+                    <div class="book-author">
+                        <i class="fas fa-user-edit me-1"></i> {{ $item->pengarang }}
                     </div>
                     
-                    <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
-                        <div>
-                            @if($item->stok > 0)
-                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Tersedia: {{ $item->stok }}</span>
-                            @else
-                                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">Stok Habis</span>
-                            @endif
-                        </div>
-                        
+                    <div class="stock-info">
                         @if($item->stok > 0)
-                        <div class="d-flex gap-1">
-                            <a href="{{ route('siswa.buku.show', $item->id) }}" 
-                            class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1 fw-semibold" 
-                            style="font-size: 0.75rem;">
-                                Detail
-                            </a>
+                            <span class="stock-available">
+                                <i class="fas fa-check-circle"></i> Tersedia {{ $item->stok }}
+                            </span>
+                        @else
+                            <span class="stock-empty">
+                                <i class="fas fa-times-circle"></i> Stok Habis
+                            </span>
+                        @endif
+                    </div>
 
-                            <form action="{{ route('siswa.buku.pinjam', $item->id) }}" method="POST">
+                    <div class="action-buttons">
+                        <a href="{{ route('siswa.buku.show', $item->id) }}" class="btn-detail">
+                            <i class="fas fa-eye me-1"></i> Detail
+                        </a>
+
+                        @if($item->stok > 0)
+                            <form action="{{ route('siswa.buku.pinjam', $item->id) }}" method="POST" style="flex: 1;">
                                 @csrf
-                                <button type="button" 
-                                    class="btn btn-primary btn-sm rounded-pill px-2 py-1 fw-semibold" 
-                                    style="font-size: 0.75rem;"
-                                    onclick="confirmPinjam(this.form, '{{ addslashes($item->judul) }}')">
-                                    Pinjam <i class="bi bi-arrow-right-short"></i>
+                                <button type="button" class="btn-borrow w-100" onclick="confirmPinjam(this.form, '{{ $item->judul }}')">
+                                    <i class="fas fa-book-open me-1"></i> Pinjam
                                 </button>
                             </form>
-                        </div>
                         @else
-                            <div class="d-flex gap-2">
-                                <a href="{{ route('siswa.buku.show', $item->id) }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">
-                                    Detail
-                                </a>
-                                <button class="btn btn-secondary btn-sm rounded-pill px-3 fw-semibold" disabled>Kosong</button>
-                            </div>
+                            <button class="btn-borrow w-100" disabled>
+                                <i class="fas fa-ban me-1"></i> Habis
+                            </button>
                         @endif
                     </div>
                 </div>
@@ -107,90 +369,91 @@
         @endforeach
     </div>
 
-    <!-- Pagination -->
+    <!-- PAGINATION -->
     <div class="d-flex justify-content-center mt-5">
-        {{ $buku->links('pagination::bootstrap-5') }}
+        <div class="pagination-custom">
+            {{ $buku->links('pagination::bootstrap-4') }}
+        </div>
     </div>
 @endif
 
-<!-- Modal Konfirmasi Pinjam -->
+<!-- MODAL PINJAM -->
 <div class="modal fade" id="pinjamModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg" style="border-radius: 16px;">
-      <div class="modal-header border-bottom-0 pb-0">
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body text-center p-4 pt-0">
-        <div class="mb-4">
-            <div class="mx-auto bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
-                <i class="bi bi-journal-check text-primary" style="font-size: 2.5rem;"></i>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0" style="background: linear-gradient(135deg, var(--primary-dark), var(--primary));">
+                <h5 class="modal-title text-white fw-semibold">
+                    <i class="fas fa-book-reader me-2"></i> Konfirmasi Peminjaman
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="mx-auto bg-light rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
+                        <i class="fas fa-question" style="font-size: 28px; color: var(--primary);"></i>
+                    </div>
+                    <p class="text-muted mb-2">Anda akan meminjam buku:</p>
+                    <strong id="judulBukuPinjam" class="text-dark fs-6">-</strong>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">
+                        <i class="fas fa-calendar-alt me-2" style="color: var(--primary);"></i>Tanggal Pengembalian
+                    </label>
+                    <input type="date" id="inputTglKembali" class="form-control rounded-3" 
+                           min="{{ \Carbon\Carbon::tomorrow()->format('Y-m-d') }}"
+                           style="border: 2px solid #e2e8f0; padding: 12px;">
+                </div>
+
+                <div class="alert alert-info py-2 small mb-0" style="background: var(--primary-soft); border: none; border-radius: 12px;">
+                    <i class="fas fa-info-circle me-2"></i> Maksimal peminjaman 7 hari. Denda Rp 5.000/hari jika terlambat.
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-4 px-4">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                <button type="button" id="btnProsesPinjam" class="btn rounded-pill px-4" style="background: var(--primary); color: white;">
+                    <i class="fas fa-check me-2"></i> Ya, Pinjam
+                </button>
             </div>
         </div>
-        <h4 class="fw-bold mb-3">Konfirmasi Peminjaman</h4>
-        <p class="text-muted mb-4 d-flex flex-column gap-1">
-            <span>Anda akan meminjam buku:</span>
-            <strong id="judulBukuPinjam" class="text-dark fs-5">Judul Buku</strong>
-        </p>
-        
-        <div class="mb-4 text-start bg-light p-3 rounded-3 border">
-            <label class="form-label fw-semibold text-dark small mb-2"><i class="bi bi-calendar-event text-primary me-2"></i>Pilih Tanggal Pengembalian</label>
-            <input type="date" name="tgl_kembali_rencana" id="inputTglKembali" class="form-control form-control-lg shadow-sm" required min="{{ \Carbon\Carbon::tomorrow()->format('Y-m-d') }}">
-            <div class="form-text mt-2" style="font-size: 0.8rem;"><i class="bi bi-info-circle me-1"></i>Pilih tanggal Anda akan mengembalikan buku ke perpustakaan. Minimal esok hari.</div>
-        </div>
-
-        <div class="d-flex justify-content-center gap-2 mt-4 mt-sm-5">
-            <button type="button" class="btn btn-light fw-medium px-4" data-bs-dismiss="modal">Batal</button>
-            <button type="button" id="btnProsesPinjam" class="btn btn-primary fw-medium px-4">Ya, Pinjam Sekarang</button>
-        </div>
-      </div>
     </div>
-  </div>
 </div>
-@endsection
 
-@push('styles')
-<style>
-    .hover-elevate:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
-    }
-</style>
-@endpush
-
-@push('scripts')
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     let formPinjamActive = null;
 
     function confirmPinjam(form, judul) {
         formPinjamActive = form;
-        document.getElementById('judulBukuPinjam').textContent = judul;
-        
-        // Reset input date
+        document.getElementById('judulBukuPinjam').innerHTML = judul;
         document.getElementById('inputTglKembali').value = '';
-        
-        var myModal = new bootstrap.Modal(document.getElementById('pinjamModal'));
-        myModal.show();
+        var modal = new bootstrap.Modal(document.getElementById('pinjamModal'));
+        modal.show();
     }
 
     document.getElementById('btnProsesPinjam').addEventListener('click', function() {
         if(formPinjamActive) {
-            const tglKembali = document.getElementById('inputTglKembali').value;
+            var tglKembali = document.getElementById('inputTglKembali').value;
             if(!tglKembali) {
-                alert('Silakan pilih tanggal pengembalian terlebih dahulu.');
-                document.getElementById('inputTglKembali').focus();
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Perhatian',
+                    text: 'Silakan pilih tanggal pengembalian terlebih dahulu!',
+                    confirmButtonColor: '#2c5282'
+                });
                 return;
             }
-
-            const hiddenInput = document.createElement('input');
+            var hiddenInput = document.createElement('input');
             hiddenInput.type = 'hidden';
             hiddenInput.name = 'tgl_kembali_rencana';
             hiddenInput.value = tglKembali;
             formPinjamActive.appendChild(hiddenInput);
-
             this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memproses...';
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
             formPinjamActive.submit();
         }
     });
 </script>
-@endpush
+@endsection

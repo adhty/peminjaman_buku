@@ -20,7 +20,7 @@
             display: flex;
         }
         .login-left {
-            background-color: #1e3a8a; /* Dark Blue */
+            background-color: #1e293b; /* Dark Blue */
             color: white;
             flex: 1;
             display: flex;
@@ -59,7 +59,7 @@
         .logo-icon {
             width: 64px;
             height: 64px;
-            background: #4f46e5;
+            background: #576377;
             border-radius: 16px;
             display: flex;
             align-items: center;

@@ -9,11 +9,13 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use Maatwebsite\Excel\Events\AfterSheet;
 
-class PengembalianExport implements FromQuery, WithHeadings, WithMapping, WithStyles, WithTitle, ShouldAutoSize
+class PengembalianExport implements FromQuery, WithHeadings, WithMapping, WithStyles, WithTitle, ShouldAutoSize, WithEvents
 {
     public function title(): string
     {
@@ -47,10 +49,12 @@ class PengembalianExport implements FromQuery, WithHeadings, WithMapping, WithSt
     {
         static $no = 0;
         $no++;
+
         $terlambat = 0;
         if ($row->tgl_kembali_aktual && $row->tgl_kembali_aktual->gt($row->tgl_kembali_rencana)) {
             $terlambat = $row->tgl_kembali_rencana->diffInDays($row->tgl_kembali_aktual);
         }
+
         return [
             $no,
             $row->anggota->nama ?? '-',
@@ -73,6 +77,31 @@ class PengembalianExport implements FromQuery, WithHeadings, WithMapping, WithSt
                 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF22C55E']],
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
             ],
+        ];
+    }
+
+    // 🔥 TAMBAHAN TOTAL DENDA
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+
+                $sheet = $event->sheet;
+
+                // ambil total dari DB (lebih akurat daripada map)
+                $totalDenda = Peminjaman::where('status', 'dikembalikan')->sum('denda');
+
+                // cari baris terakhir data
+                $row = $sheet->getHighestRow() + 2;
+
+                // label total
+                $sheet->setCellValue('I' . $row, 'TOTAL DENDA');
+                $sheet->setCellValue('J' . $row, $totalDenda);
+
+                // styling total
+                $sheet->getStyle("I{$row}:J{$row}")->getFont()->setBold(true);
+                $sheet->getStyle("I{$row}:J{$row}")->getAlignment()->setHorizontal('right');
+            },
         ];
     }
 }

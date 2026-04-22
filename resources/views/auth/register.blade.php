@@ -20,7 +20,7 @@
             display: flex;
         }
         .login-left {
-            background-color: #1e3a8a; /* Dark Blue */
+            background-color: #1e293b;; /* Dark Blue */
             color: white;
             flex: 1;
             display: flex;

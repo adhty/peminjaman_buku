@@ -16,7 +16,7 @@
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>
-                        <th width="70" class="text-center">#</th>
+                        <th width="70" class="text-center">No</th>
                         <th>Nama Kategori</th>
                         <th>Slug</th>
                         <th class="text-center">Total Buku</th>

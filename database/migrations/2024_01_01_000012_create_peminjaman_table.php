@@ -10,13 +10,31 @@ return new class extends Migration
     {
         Schema::create('peminjaman', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('anggota_id')->constrained('anggota')->onDelete('cascade');
-            $table->foreignId('buku_id')->constrained('buku')->onDelete('cascade');
+
+            $table->foreignId('anggota_id')
+                ->constrained('anggota')
+                ->onDelete('cascade');
+
+            $table->foreignId('buku_id')
+                ->constrained('buku')
+                ->onDelete('cascade');
+
             $table->date('tgl_pinjam');
             $table->date('tgl_kembali_rencana');
             $table->date('tgl_kembali_aktual')->nullable();
-            $table->enum('status', ['dipinjam', 'dikembalikan', 'terlambat'])->default('dipinjam');
+
+            // 🔥 FIX ENUM STATUS (WAJIB SESUAI FLOW BARU)
+            $table->enum('status', [
+                'menunggu_persetujuan',
+                'dipinjam',
+                'terlambat',
+                'menunggu_pengembalian',
+                'dikembalikan',
+                'ditolak'
+            ])->default('menunggu_persetujuan');
+
             $table->integer('denda')->default(0);
+
             $table->timestamps();
         });
     }

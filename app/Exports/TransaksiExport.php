@@ -9,11 +9,13 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use Maatwebsite\Excel\Events\AfterSheet;
 
-class TransaksiExport implements FromQuery, WithHeadings, WithMapping, WithStyles, WithTitle, ShouldAutoSize
+class TransaksiExport implements FromQuery, WithHeadings, WithMapping, WithStyles, WithTitle, ShouldAutoSize, WithEvents
 {
     protected string $status;
 
@@ -30,9 +32,11 @@ class TransaksiExport implements FromQuery, WithHeadings, WithMapping, WithStyle
     public function query()
     {
         $q = Peminjaman::with(['anggota', 'buku'])->latest();
+
         if ($this->status !== 'all') {
             $q->where('status', $this->status);
         }
+
         return $q;
     }
 
@@ -56,6 +60,7 @@ class TransaksiExport implements FromQuery, WithHeadings, WithMapping, WithStyle
     {
         static $no = 0;
         $no++;
+
         return [
             $no,
             $row->anggota->nama ?? '-',
@@ -78,6 +83,36 @@ class TransaksiExport implements FromQuery, WithHeadings, WithMapping, WithStyle
                 'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['argb' => 'FF4F46E5']],
                 'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
             ],
+        ];
+    }
+
+    // 🔥 TAMBAHAN TOTAL DENDA
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+
+                $sheet = $event->sheet;
+
+                // total denda sesuai filter status
+                $query = Peminjaman::query();
+
+                if ($this->status !== 'all') {
+                    $query->where('status', $this->status);
+                }
+
+                $totalDenda = $query->sum('denda');
+
+                // baris terakhir + 2
+                $row = $sheet->getHighestRow() + 2;
+
+                $sheet->setCellValue('I' . $row, 'TOTAL DENDA');
+                $sheet->setCellValue('J' . $row, $totalDenda);
+
+                // styling total
+                $sheet->getStyle("I{$row}:J{$row}")->getFont()->setBold(true);
+                $sheet->getStyle("I{$row}:J{$row}")->getAlignment()->setHorizontal('right');
+            },
         ];
     }
 }

@@ -15,18 +15,18 @@
 
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --bs-primary: #4f46e5;
-            --bs-primary-rgb: 79, 70, 229;
-            --sidebar-bg-from: #1e3a8a;
-            --sidebar-bg-to: #312e81;
-            --sidebar-active: rgba(255, 255, 255, 0.15);
-            --sidebar-hover: rgba(255, 255, 255, 0.08);
+            --primary-dark: #1e3a5f;
+            --primary: #2c5282;
+            --primary-light: #3182ce;
+            --primary-soft: #ebf4ff;
+            --sidebar-bg-from: #1e3a5f;
+            --sidebar-bg-to: #2c5282;
+            --sidebar-active: rgba(255, 255, 255, 0.12);
+            --sidebar-hover: rgba(255, 255, 255, 0.06);
             --bg-body: #f8fafc;
             --text-dark: #1e293b;
             --text-muted: #64748b;
-            --border-color: #e2e8f0;
+            --border-color: #eef2f6;
         }
 
         body {
