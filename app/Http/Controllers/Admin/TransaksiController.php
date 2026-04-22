@@ -50,11 +50,17 @@ class TransaksiController extends Controller
             ->count();
 
         // ✅ FIX TAMBAHAN (TIDAK MENGUBAH LOGIC LAIN)
-        $totalDenda = Peminjaman::whereIn('status', ['dipinjam', 'terlambat'])
+        // Hitung denda aktif (berjalan)
+        $activeDenda = Peminjaman::whereIn('status', ['dipinjam', 'terlambat'])
             ->get()
             ->sum(function ($item) {
                 return $item->hitungDenda();
             });
+
+        // Hitung denda yang sudah tersimpan (sudah kembali)
+        $collectedDenda = Peminjaman::where('status', 'dikembalikan')->sum('denda');
+
+        $totalDenda = $activeDenda + $collectedDenda;
 
         return view('admin.pengembalian.index', compact(
             'transaksi',

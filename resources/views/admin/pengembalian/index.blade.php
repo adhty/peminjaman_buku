@@ -513,6 +513,12 @@
                                         <i class="fas fa-calendar-check me-1"></i>
                                         {{ $item->tgl_kembali_aktual->format('d M Y') }}
                                     </div>
+                                    @if($item->denda > 0)
+                                        <div class="small fw-bold text-danger mt-1">
+                                            <i class="fas fa-money-bill-wave me-1"></i> 
+                                            Rp {{ number_format($item->denda, 0, ',', '.') }}
+                                        </div>
+                                    @endif
                                 @endif
                             </td>
                             <td class="text-center">
