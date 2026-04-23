@@ -171,10 +171,9 @@ class TransaksiController extends Controller
         $peminjaman->update([
             'status' => 'dipinjam',
             'tgl_pinjam' => today(),
-            'tgl_kembali_rencana' => today()->addDays(7),
         ]);
 
-        return back()->with('success', 'Peminjaman disetujui. Batas pengembalian diatur otomatis 7 hari dari sekarang.');
+        return back()->with('success', 'Peminjaman disetujui sesuai dengan tanggal rencana kembali yang dipilih siswa.');
     }
 
     public function reject($id)
