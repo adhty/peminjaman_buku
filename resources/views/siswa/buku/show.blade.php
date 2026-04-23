@@ -316,18 +316,22 @@
                     <strong id="judulBukuPinjam" class="text-dark fs-6 d-block" style="color: var(--primary-dark) !important;">-</strong>
                 </div>
 
-                <div class="alert alert-warning py-3 px-3 small mb-0" style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; color: #92400e;">
-                    <div class="d-flex gap-3">
-                        <i class="fas fa-info-circle fs-5 mt-1"></i>
-                        <div>
-                            <div class="fw-bold mb-1">Ketentuan Peminjaman:</div>
-                            <ul class="mb-0 ps-3">
-                                <li>Durasi peminjaman: <strong>7 Hari</strong></li>
-                                <li>Denda keterlambatan: <strong>Rp 5.000/hari</strong></li>
-                                <li>Status: <strong>Menunggu Persetujuan Admin</strong></li>
-                            </ul>
-                        </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">
+                        <i class="fas fa-calendar-alt me-2" style="color: var(--primary);"></i>Pilih Tanggal Pengembalian
+                    </label>
+                    <input type="date" id="inputTglKembali" class="form-control rounded-3" 
+                           min="{{ \Carbon\Carbon::tomorrow()->format('Y-m-d') }}"
+                           max="{{ \Carbon\Carbon::today()->addDays(7)->format('Y-m-d') }}"
+                           value="{{ \Carbon\Carbon::today()->addDays(7)->format('Y-m-d') }}"
+                           style="border: 2px solid #e2e8f0; padding: 12px;">
+                    <div class="form-text text-primary small mt-1">
+                        <i class="fas fa-info-circle me-1"></i> Maksimal peminjaman 7 hari.
                     </div>
+                </div>
+
+                <div class="alert alert-warning py-2 small mb-0" style="background: #fffbeb; border: none; border-radius: 12px; color: #92400e;">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Denda Rp 5.000/hari jika melewati batas kembali.
                 </div>
             </div>
             <div class="modal-footer border-0 pt-0 pb-4 px-4">
@@ -350,12 +354,30 @@
     function confirmPinjam(form, judul) {
         formPinjamActive = form;
         document.getElementById('judulBukuPinjam').innerHTML = judul;
-        document.getElementById('inputTglKembali').value = '';
         var myModal = new bootstrap.Modal(document.getElementById('pinjamModal'));
         myModal.show();
     }
 
-    document.getElementById('formPinjamDetail').addEventListener('submit', function() {
+    document.getElementById('formPinjamDetail').addEventListener('submit', function(e) {
+        var tglKembali = document.getElementById('inputTglKembali').value;
+        if(!tglKembali) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'warning',
+                title: 'Perhatian',
+                text: 'Silakan pilih tanggal pengembalian!',
+                confirmButtonColor: '#2c5282'
+            });
+            return;
+        }
+
+        // Tambahkan input hidden ke form
+        var hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'tgl_kembali_rencana';
+        hiddenInput.value = tglKembali;
+        this.appendChild(hiddenInput);
+
         const btn = document.getElementById('btnProsesPinjam');
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';

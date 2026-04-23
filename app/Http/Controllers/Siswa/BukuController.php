@@ -54,7 +54,9 @@ class BukuController extends Controller
 
     public function pinjam(Request $request, $id)
     {
-        $request->validate([]);
+        $request->validate([
+            'tgl_kembali_rencana' => 'required|date|after:today|before_or_equal:' . today()->addDays(7)->format('Y-m-d'),
+        ]);
 
         $user = auth()->user();
         if (!$user->anggota) {
@@ -86,12 +88,12 @@ class BukuController extends Controller
             return back()->with('error', 'Anda masih memiliki permintaan atau peminjaman aktif untuk buku ini.');
         }
 
-        // Buat transaksi peminjaman (Batas waktu otomatis 7 hari)
+        // Buat transaksi peminjaman
         Peminjaman::create([
             'anggota_id'          => $user->anggota->id,
             'buku_id'             => $buku->id,
             'tgl_pinjam'          => today(),
-            'tgl_kembali_rencana' => today()->addDays(7),
+            'tgl_kembali_rencana' => $request->tgl_kembali_rencana,
             'status'              => 'menunggu_persetujuan',
         ]);
 

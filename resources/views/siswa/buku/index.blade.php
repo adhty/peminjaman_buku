@@ -398,15 +398,20 @@
 
                 <div class="mb-3">
                     <label class="form-label fw-semibold small">
-                        <i class="fas fa-calendar-alt me-2" style="color: var(--primary);"></i>Tanggal Pengembalian
+                        <i class="fas fa-calendar-alt me-2" style="color: var(--primary);"></i>Pilih Tanggal Pengembalian
                     </label>
                     <input type="date" id="inputTglKembali" class="form-control rounded-3" 
                            min="{{ \Carbon\Carbon::tomorrow()->format('Y-m-d') }}"
+                           max="{{ \Carbon\Carbon::today()->addDays(7)->format('Y-m-d') }}"
+                           value="{{ \Carbon\Carbon::today()->addDays(7)->format('Y-m-d') }}"
                            style="border: 2px solid #e2e8f0; padding: 12px;">
+                    <div class="form-text text-primary small mt-1">
+                        <i class="fas fa-info-circle me-1"></i> Maksimal peminjaman 7 hari.
+                    </div>
                 </div>
 
-                <div class="alert alert-info py-2 small mb-0" style="background: var(--primary-soft); border: none; border-radius: 12px;">
-                    <i class="fas fa-info-circle me-2"></i> Maksimal peminjaman 7 hari. Denda Rp 5.000/hari jika terlambat.
+                <div class="alert alert-warning py-2 small mb-0" style="background: #fffbeb; border: none; border-radius: 12px; color: #92400e;">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Denda Rp 5.000/hari jika melewati batas kembali.
                 </div>
             </div>
             <div class="modal-footer border-0 pt-0 pb-4 px-4">
@@ -428,7 +433,6 @@
     function confirmPinjam(form, judul) {
         formPinjamActive = form;
         document.getElementById('judulBukuPinjam').innerHTML = judul;
-        document.getElementById('inputTglKembali').value = '';
         var modal = new bootstrap.Modal(document.getElementById('pinjamModal'));
         modal.show();
     }
@@ -440,16 +444,19 @@
                 Swal.fire({
                     icon: 'warning',
                     title: 'Perhatian',
-                    text: 'Silakan pilih tanggal pengembalian terlebih dahulu!',
+                    text: 'Silakan pilih tanggal pengembalian!',
                     confirmButtonColor: '#2c5282'
                 });
                 return;
             }
+            
+            // Tambahkan input hidden ke form aktif
             var hiddenInput = document.createElement('input');
             hiddenInput.type = 'hidden';
             hiddenInput.name = 'tgl_kembali_rencana';
             hiddenInput.value = tglKembali;
             formPinjamActive.appendChild(hiddenInput);
+
             this.disabled = true;
             this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
             formPinjamActive.submit();
