@@ -12,6 +12,11 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        // 🔥 UPDATE STATUS TERLAMBAT (Pindahkan ke atas agar statistik akurat)
+        Peminjaman::where('status', 'dipinjam')
+                  ->where('tgl_kembali_rencana', '<', today())
+                  ->update(['status' => 'terlambat']);
+
         $totalBuku     = Buku::count();
         $totalAnggota  = Anggota::count();
         $dipinjam      = Peminjaman::where('status', 'dipinjam')->count();
@@ -23,11 +28,6 @@ class DashboardController extends Controller
                                         ->latest()
                                         ->take(5)
                                         ->get();
-
-        // 🔥 UPDATE STATUS TERLAMBAT
-        Peminjaman::where('status', 'dipinjam')
-                  ->where('tgl_kembali_rencana', '<', today())
-                  ->update(['status' => 'terlambat']);
 
         // ======================
         // 📊 STATISTIK BULANAN

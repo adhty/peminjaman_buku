@@ -97,6 +97,7 @@
                             <th>TGL PINJAM</th>
                             <th>BATAS KEMBALI</th>
                             <th>STATUS</th>
+
                             <th width="15%" class="text-center">AKSI</th>
                         </tr>
                     </thead>
@@ -133,8 +134,12 @@
                                     <div class="small fw-bold text-danger mt-1" style="font-size: 11px;">Denda berjalan: Rp{{ number_format($item->hitungDenda(), 0, ',', '.') }}</div>
                                 @elseif($item->status === 'ditolak')
                                     <span class="badge bg-dark bg-opacity-10 text-dark border border-dark border-opacity-25 px-2 py-1"><i class="bi bi-x-circle"></i> Ditolak</span>
+                                    @if($item->alasan_ditolak)
+                                        <div class="small text-muted mt-1" style="font-size: 11px;">Alasan: {{ $item->alasan_ditolak }}</div>
+                                    @endif
                                 @endif
                             </td>
+
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm">
                                     @if($item->status === 'menunggu_persetujuan')
@@ -142,11 +147,13 @@
                                             @csrf
                                             <button type="submit" class="btn btn-success text-white" title="Terima Peminjaman"><i class="bi bi-check-lg"></i></button>
                                         </form>
-                                        <form action="{{ route('admin.transaksi.reject', $item->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Tolak permintaan pinjam ini?');">
-                                            @csrf
-                                            <button type="submit" class="btn btn-dark text-white" title="Tolak Peminjaman"><i class="bi bi-x-lg"></i></button>
-                                        </form>
+                                        <button type="button" class="btn btn-dark text-white" title="Tolak Peminjaman" onclick="confirmReject(`{{ route('admin.transaksi.reject', $item->id) }}`)">
+                                            <i class="bi bi-x-lg"></i>
+                                        </button>
                                     @elseif($item->status !== 'dikembalikan' && $item->status !== 'ditolak')
+                                        <button type="button" class="btn btn-success text-white" title="Kembalikan Buku" onclick="confirmKembali(`{{ route('admin.transaksi.kembalikan', $item->id) }}`, `{{ $item->anggota->nama }}`, `{{ $item->buku->judul }}`, `{{ $item->tgl_kembali_rencana->format('Y-m-d') }}`)">
+                                            <i class="bi bi-arrow-return-left"></i>
+                                        </button>
                                     @endif
                                     
                                     @if($item->status !== 'ditolak' && $item->status !== 'menunggu_persetujuan')
@@ -174,30 +181,87 @@
     </div>
 </div>
 
-<!-- Modal Pengembalian (Bootstrap Modal) -->
+<!-- Modal Pengembalian Detil -->
 <div class="modal fade" id="kembaliModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
       <div class="modal-header border-bottom-0 pb-0">
-        <h5 class="modal-title fw-bold"><i class="bi bi-check-circle text-success me-2"></i> Proses Pengembalian</h5>
+        <h5 class="modal-title fw-bold text-success"><i class="bi bi-clipboard-check me-2"></i> Laporan Kondisi Buku Kembali</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form id="kembaliForm" method="POST">
+      <form id="kembaliForm" method="POST" enctype="multipart/form-data">
           @csrf
           <div class="modal-body pt-3 pb-4">
-            <p class="text-muted mb-4">Apakah Anda yakin buku ini telah dikembalikan oleh siswa secara fisik?</p>
-            
-            <div class="mb-3 text-center">
-                <div class="bg-success bg-opacity-10 text-success p-3 rounded-3 mb-2">
-                    <i class="bi bi-calendar-check me-1"></i> <strong>Tanggal Pengembalian:</strong> {{ date('d M Y') }}
+            <div class="row g-3">
+                <div class="col-12">
+                    <div class="p-3 bg-light rounded border">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Buku:</small>
+                                <strong id="modalBuku" class="text-primary">Judul Buku</strong>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <small class="text-muted d-block">Peminjam:</small>
+                                <strong id="modalPeminjam">Nama Peminjam</strong>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-text text-muted small"><i class="bi bi-info-circle"></i> Denda akan otomatis dikalkulasi berdasarkan tanggal hari ini.</div>
+
+                <div class="col-12">
+                    <label class="form-label fw-bold">Kondisi Buku Saat Kembali</label>
+                    <div class="d-flex gap-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="kondisi_buku_kembali" id="kondisiBaik" value="baik" checked onchange="updateDendaUI()">
+                            <label class="form-check-label text-success fw-semibold" for="kondisiBaik">Baik</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="kondisi_buku_kembali" id="kondisiRusak" value="rusak" onchange="updateDendaUI()">
+                            <label class="form-check-label text-warning fw-semibold" for="kondisiRusak">Rusak</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="kondisi_buku_kembali" id="kondisiHilang" value="hilang" onchange="updateDendaUI()">
+                            <label class="form-check-label text-danger fw-semibold" for="kondisiHilang">Hilang</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold small">Bukti Foto Kerusakan</label>
+                    <input type="file" name="foto_kerusakan" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold small">Denda Kerusakan (Rp)</label>
+                    <input type="number" name="denda_kerusakan" id="dendaKerusakan" class="form-control form-control-sm" value="0" min="0" oninput="updateDendaUI()">
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label fw-semibold small">Catatan Kerusakan</label>
+                    <textarea name="catatan_kerusakan" class="form-control form-control-sm" rows="2" placeholder="Opsional..."></textarea>
+                </div>
+
+                <div class="col-12">
+                    <div class="p-3 rounded bg-success bg-opacity-10 border border-success border-opacity-20">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span>Denda Keterlambatan:</span>
+                            <span id="uiDendaTelat" class="fw-bold">Rp 0</span>
+                        </div>
+                        <div class="d-flex justify-content-between small mb-2">
+                            <span>Denda Kerusakan:</span>
+                            <span id="uiDendaRusak" class="fw-bold">+ Rp 0</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center border-top pt-2">
+                            <span class="fw-bold">Total Denda:</span>
+                            <h5 id="uiTotalDenda" class="fw-bold text-danger mb-0">Rp 0</h5>
+                        </div>
+                    </div>
+                </div>
             </div>
           </div>
           <div class="modal-footer border-top-0 bg-light rounded-bottom">
               <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Batal</button>
-              <button type="submit" class="btn btn-success px-4 text-white">
-                  <i class="bi bi-check2"></i> Konfirmasi Kembali
+              <button type="submit" class="btn btn-success px-4 text-white fw-bold">
+                  Proses Pengembalian
               </button>
           </div>
       </form>
@@ -247,14 +311,73 @@
     </div>
   </div>
 </div>
+<!-- Modal Tolak Peminjaman -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title fw-bold text-danger"><i class="bi bi-x-circle me-2"></i> Tolak Peminjaman</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="rejectForm" method="POST">
+          @csrf
+          <div class="modal-body pt-3 pb-4">
+            <p class="text-muted mb-3">Berikan alasan mengapa permintaan peminjaman ini ditolak.</p>
+            <div class="mb-0">
+                <label class="form-label fw-semibold small">Alasan Penolakan</label>
+                <textarea name="alasan_ditolak" class="form-control" rows="3" placeholder="Misal: Stok buku sedang dalam perbaikan, anggota memiliki denda yang belum dibayar, dll." required></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-top-0 bg-light rounded-bottom">
+              <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Batal</button>
+              <button type="submit" class="btn btn-danger px-4 text-white fw-bold">
+                  <i class="bi bi-x-circle me-1"></i> Konfirmasi Tolak
+              </button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>
 @endsection
 
 @push('scripts')
 <script>
-    function confirmKembali(action) {
+    let currentTglKembaliRencana = null;
+
+    function confirmKembali(action, peminjam, buku, tglKembaliRencana) {
         document.getElementById('kembaliForm').action = action;
+        document.getElementById('modalPeminjam').innerHTML = peminjam;
+        document.getElementById('modalBuku').innerHTML = buku;
+        currentTglKembaliRencana = tglKembaliRencana;
+        
+        document.getElementById('kembaliForm').reset();
+        updateDendaUI();
+
         var myModal = new bootstrap.Modal(document.getElementById('kembaliModal'));
         myModal.show();
+    }
+
+    function updateDendaUI() {
+        if (!currentTglKembaliRencana) return;
+
+        const tglRencana = new Date(currentTglKembaliRencana);
+        const tglHariIni = new Date();
+        tglHariIni.setHours(0,0,0,0);
+        tglRencana.setHours(0,0,0,0);
+
+        let dendaTelat = 0;
+        if (tglHariIni > tglRencana) {
+            const diffTime = Math.abs(tglHariIni - tglRencana);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            dendaTelat = diffDays * 5000;
+        }
+
+        const dendaRusak = parseInt(document.getElementById('dendaKerusakan').value) || 0;
+        const totalDenda = dendaTelat + dendaRusak;
+
+        document.getElementById('uiDendaTelat').innerText = 'Rp ' + dendaTelat.toLocaleString('id-ID');
+        document.getElementById('uiDendaRusak').innerText = '+ Rp ' + dendaRusak.toLocaleString('id-ID');
+        document.getElementById('uiTotalDenda').innerText = 'Rp ' + totalDenda.toLocaleString('id-ID');
     }
 
     function editTransaksi(action, tgl, denda) {
@@ -268,6 +391,11 @@
         
         document.getElementById('edit_denda').value = denda || 0;
         var myModal = new bootstrap.Modal(document.getElementById('editModal'));
+        myModal.show();
+    }
+    function confirmReject(action) {
+        document.getElementById('rejectForm').action = action;
+        var myModal = new bootstrap.Modal(document.getElementById('rejectModal'));
         myModal.show();
     }
 </script>

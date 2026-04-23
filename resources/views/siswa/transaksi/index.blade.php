@@ -481,6 +481,11 @@
                                     <span class="badge-custom badge-returned">
                                         <i class="fas fa-check-double"></i> Selesai
                                     </span>
+                                    @if($item->kondisi_buku_kembali !== 'baik')
+                                        <div class="small text-danger mt-1" style="font-size: 11px;">
+                                            <i class="fas fa-exclamation-circle me-1"></i> Kondisi: {{ ucfirst($item->kondisi_buku_kembali) }}
+                                        </div>
+                                    @endif
                                 @elseif($item->status === 'terlambat')
                                     <span class="badge-custom badge-late">
                                         <i class="fas fa-exclamation-triangle"></i> Terlambat
@@ -489,13 +494,25 @@
                                     <span class="badge-custom badge-rejected">
                                         <i class="fas fa-times-circle"></i> Ditolak
                                     </span>
+                                    @if($item->alasan_ditolak)
+                                        <div class="small text-muted mt-1" style="font-size: 11px;">Alasan: {{ $item->alasan_ditolak }}</div>
+                                    @endif
                                 @endif
 
                                 @if($item->denda > 0)
-                                    <div class="mt-2">
+                                    <div class="mt-2 d-flex flex-column gap-1">
                                         <span class="small text-danger fw-semibold">
                                             <i class="fas fa-money-bill-wave me-1"></i> Rp {{ number_format($item->denda, 0, ',', '.') }}
                                         </span>
+                                        @if($item->status_bayar === 'lunas')
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25" style="font-size: 9px; width: fit-content;">
+                                                <i class="fas fa-check-circle me-1"></i> Lunas
+                                            </span>
+                                        @else
+                                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25" style="font-size: 9px; width: fit-content;">
+                                                <i class="fas fa-times-circle me-1"></i> Belum Lunas
+                                            </span>
+                                        @endif
                                     </div>
                                 @elseif($item->status === 'terlambat')
                                     @php $dendaSementara = $item->tgl_kembali_rencana->diffInDays(today()) * 5000; @endphp
@@ -508,18 +525,54 @@
                             </td>
                             <td class="text-center pe-4 py-3">
                                 @if(in_array($item->status, ['dipinjam', 'terlambat']))
-                                    <form action="{{ route('siswa.transaksi.kembalikan', $item->id) }}" method="POST">
-                                        @csrf
-                                        <button type="button" 
-                                                onclick="confirmKembali(this.form, '{{ addslashes($item->buku->judul) }}')" 
-                                                class="btn-return">
-                                            <i class="fas fa-undo-alt me-1"></i> Kembalikan
+                                    <div class="d-flex flex-column gap-2 align-items-center">
+                                        <form action="{{ route('siswa.transaksi.kembalikan', $item->id) }}" method="POST">
+                                            @csrf
+                                            <button type="button" 
+                                                    onclick="confirmKembali(this.form, '{{ addslashes($item->buku->judul) }}')" 
+                                                    class="btn-return">
+                                                <i class="fas fa-undo-alt me-1"></i> Kembalikan
+                                            </button>
+                                        </form>
+                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" style="font-size: 10px;" 
+                                            onclick="showDetail({{ json_encode([
+                                                'judul' => $item->buku->judul,
+                                                'kode' => $item->buku->kode_buku,
+                                                'status' => $item->status,
+                                                'tgl_pinjam' => $item->tgl_pinjam->format('d M Y'),
+                                                'tgl_rencana' => $item->tgl_kembali_rencana->format('d M Y'),
+                                                'tgl_aktual' => $item->tgl_kembali_aktual ? $item->tgl_kembali_aktual->format('d M Y') : '-',
+                                                'kondisi' => $item->kondisi_buku_kembali ?? 'Belum dicek',
+                                                'catatan' => $item->catatan_kerusakan ?? '-',
+                                                'denda' => number_format($item->hitungDenda(), 0, ',', '.'),
+                                                'status_bayar' => $item->status_bayar,
+                                                'foto' => $item->foto_kerusakan ? asset('storage/' . $item->foto_kerusakan) : null
+                                            ]) }})">
+                                            <i class="fas fa-eye me-1"></i> Detail
                                         </button>
-                                    </form>
+                                    </div>
                                 @elseif($item->status === 'dikembalikan')
-                                    <button class="btn-completed" disabled>
-                                        <i class="fas fa-check-circle me-1"></i> Selesai
-                                    </button>
+                                    <div class="d-flex flex-column gap-2 align-items-center">
+                                        <button class="btn-completed" disabled>
+                                            <i class="fas fa-check-circle me-1"></i> Selesai
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" style="font-size: 10px;"
+                                            onclick="showDetail({{ json_encode([
+                                                'judul' => $item->buku->judul,
+                                                'kode' => $item->buku->kode_buku,
+                                                'status' => $item->status,
+                                                'tgl_pinjam' => $item->tgl_pinjam->format('d M Y'),
+                                                'tgl_rencana' => $item->tgl_kembali_rencana->format('d M Y'),
+                                                'tgl_aktual' => $item->tgl_kembali_aktual ? $item->tgl_kembali_aktual->format('d M Y') : '-',
+                                                'kondisi' => $item->kondisi_buku_kembali ?? 'Baik',
+                                                'catatan' => $item->catatan_kerusakan ?? '-',
+                                                'denda' => number_format($item->hitungDenda(), 0, ',', '.'),
+                                                'status_bayar' => $item->status_bayar,
+                                                'foto' => $item->foto_kerusakan ? asset('storage/' . $item->foto_kerusakan) : null
+                                            ]) }})">
+                                            <i class="fas fa-eye me-1"></i> Detail
+                                        </button>
+                                    </div>
 
                                 @elseif($item->status === 'menunggu_persetujuan')
                                     <span class="small text-muted">
@@ -594,6 +647,78 @@
     </div>
 </div>
 
+<!-- MODAL DETAIL TRANSAKSI -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 bg-primary text-white rounded-top-4 p-4">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-info-circle me-2"></i> Detail Peminjaman
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="h5 fw-bold mb-1" id="detJudul"></div>
+                    <div class="text-muted small" id="detKode"></div>
+                    <div id="detBadge" class="mt-2"></div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="small text-muted mb-1 text-uppercase fw-bold" style="font-size: 10px;">Tanggal Pinjam</div>
+                            <div class="fw-bold" id="detTglPinjam"></div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="small text-muted mb-1 text-uppercase fw-bold" style="font-size: 10px;">Batas Kembali</div>
+                            <div class="fw-bold" id="detTglRencana"></div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 bg-light rounded-3 border-start border-4 border-success">
+                            <div class="small text-muted mb-1 text-uppercase fw-bold" style="font-size: 10px;">Tgl Kembali (Aktual)</div>
+                            <div class="fw-bold" id="detTglAktual"></div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-3 bg-light rounded-3 border-start border-4 border-warning">
+                            <div class="small text-muted mb-1 text-uppercase fw-bold" style="font-size: 10px;">Kondisi Buku</div>
+                            <div class="fw-bold" id="detKondisi"></div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="small text-muted mb-1 text-uppercase fw-bold" style="font-size: 10px;">Catatan Kerusakan</div>
+                            <div class="small" id="detCatatan"></div>
+                        </div>
+                    </div>
+                    <div class="col-12" id="detFotoBox" style="display: none;">
+                        <div class="p-3 bg-light rounded-3">
+                            <div class="small text-muted mb-2 text-uppercase fw-bold" style="font-size: 10px;">Foto Kerusakan</div>
+                            <img src="" id="detFoto" class="img-fluid rounded-3 border shadow-sm" alt="Foto Kerusakan">
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="p-3 rounded-3 d-flex justify-content-between align-items-center" id="detDendaBox" style="background: #fff5f5;">
+                            <div>
+                                <div class="small text-muted text-uppercase fw-bold" style="font-size: 10px;">Total Denda</div>
+                                <div class="h5 fw-bold text-danger mb-0" id="detDenda"></div>
+                            </div>
+                            <div id="detStatusBayar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 p-4 pt-0">
+                <button type="button" class="btn btn-primary w-100 rounded-pill fw-bold" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -624,6 +749,44 @@
         formKembaliActive.submit();
     }
 });
+
+    function showDetail(data) {
+        document.getElementById('detJudul').innerText = data.judul;
+        document.getElementById('detKode').innerText = 'Kode: ' + data.kode;
+        document.getElementById('detTglPinjam').innerText = data.tgl_pinjam;
+        document.getElementById('detTglRencana').innerText = data.tgl_rencana;
+        document.getElementById('detTglAktual').innerText = data.tgl_aktual;
+        document.getElementById('detKondisi').innerText = data.kondisi.charAt(0).toUpperCase() + data.kondisi.slice(1);
+        document.getElementById('detCatatan').innerText = data.catatan;
+        document.getElementById('detDenda').innerText = 'Rp ' + data.denda;
+
+        // Foto Kerusakan
+        const fotoBox = document.getElementById('detFotoBox');
+        const fotoImg = document.getElementById('detFoto');
+        if (data.foto) {
+            fotoImg.src = data.foto;
+            fotoBox.style.display = 'block';
+        } else {
+            fotoBox.style.display = 'none';
+        }
+
+        // Badge Status
+        let badgeHtml = '';
+        if (data.status === 'dipinjam') badgeHtml = '<span class="badge bg-primary px-3 rounded-pill">Aktif</span>';
+        else if (data.status === 'terlambat') badgeHtml = '<span class="badge bg-danger px-3 rounded-pill">Terlambat</span>';
+        else if (data.status === 'dikembalikan') badgeHtml = '<span class="badge bg-success px-3 rounded-pill">Selesai</span>';
+        else if (data.status === 'menunggu_pengembalian') badgeHtml = '<span class="badge bg-warning px-3 rounded-pill text-dark">Menunggu Verifikasi</span>';
+        document.getElementById('detBadge').innerHTML = badgeHtml;
+
+        // Status Bayar
+        let bayarHtml = '';
+        if (data.status_bayar === 'lunas') bayarHtml = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> Lunas</span>';
+        else bayarHtml = '<span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i> Belum Lunas</span>';
+        document.getElementById('detStatusBayar').innerHTML = bayarHtml;
+
+        var myModal = new bootstrap.Modal(document.getElementById('detailModal'));
+        myModal.show();
+    }
 
     @if(session('success'))
         Swal.fire({

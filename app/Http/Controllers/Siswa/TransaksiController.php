@@ -52,7 +52,7 @@ class TransaksiController extends Controller
             return back()->with('warning', 'Buku sudah dikembalikan.');
         }
 
-        if ($peminjaman->status === 'menunggu_verifikasi') {
+        if ($peminjaman->status === 'menunggu_pengembalian') {
             return back()->with('warning', 'Sudah diajukan, tunggu admin.');
         }
 

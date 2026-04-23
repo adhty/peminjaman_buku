@@ -104,6 +104,8 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
     Route::get('/pengembalian', [TransaksiController::class, 'pengembalian'])
         ->name('pengembalian.index');
 
+    Route::post('/transaksi/{id}/lunas', [TransaksiController::class, 'markLunas'])->name('transaksi.lunas');
+
     Route::get('/pengembalian/export/{type}', [TransaksiController::class, 'exportPengembalian'])
         ->name('pengembalian.export');
 });

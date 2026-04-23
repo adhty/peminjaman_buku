@@ -18,7 +18,12 @@ class Peminjaman extends Model
         'tgl_pinjam',
         'tgl_kembali_rencana',
         'tgl_kembali_aktual',
+        'alasan_ditolak',
+        'status_bayar',
         'status',
+        'kondisi_buku_kembali',
+        'foto_kerusakan',
+        'catatan_kerusakan',
         'denda',
     ];
 

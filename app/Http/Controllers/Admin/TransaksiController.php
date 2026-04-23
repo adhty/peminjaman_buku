@@ -23,7 +23,15 @@ class TransaksiController extends Controller
                   ->update(['status' => 'terlambat']);
 
         $query = Peminjaman::with(['anggota', 'buku'])
-            ->whereIn('status', ['dipinjam', 'terlambat', 'dikembalikan']);
+            ->whereIn('status', ['dipinjam', 'terlambat', 'menunggu_pengembalian', 'dikembalikan']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('status_bayar')) {
+            $query->where('status_bayar', $request->status_bayar);
+        }
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -36,8 +44,9 @@ class TransaksiController extends Controller
 
         $transaksi = $query->orderByRaw("CASE 
                 WHEN status = 'terlambat' THEN 1 
-                WHEN status = 'dipinjam' THEN 2 
-                ELSE 3 
+                WHEN status = 'menunggu_pengembalian' THEN 2
+                WHEN status = 'dipinjam' THEN 3 
+                ELSE 4 
             END")
             ->orderBy('tgl_kembali_rencana', 'asc')
             ->paginate(15)
@@ -49,25 +58,27 @@ class TransaksiController extends Controller
             ->whereDate('tgl_kembali_aktual', today())
             ->count();
 
-        // ✅ FIX TAMBAHAN (TIDAK MENGUBAH LOGIC LAIN)
-        // Hitung denda aktif (berjalan)
-        $activeDenda = Peminjaman::whereIn('status', ['dipinjam', 'terlambat'])
+        // Hitung denda yang BELUM dibayar (Tagihan Aktif)
+        // Termasuk denda berjalan (terlambat) dan denda tetap (kembali tapi belum bayar)
+        $dendaBelumDibayar = Peminjaman::where('status_bayar', 'belum_bayar')
             ->get()
-            ->sum(function ($item) {
-                return $item->hitungDenda();
+            ->sum(function($p) {
+                if ($p->status === 'terlambat') {
+                    return $p->hitungDenda();
+                }
+                return $p->denda;
             });
 
-        // Hitung denda yang sudah tersimpan (sudah kembali)
-        $collectedDenda = Peminjaman::where('status', 'dikembalikan')->sum('denda');
-
-        $totalDenda = $activeDenda + $collectedDenda;
+        // Hitung denda yang SUDAH dibayar (Lunas)
+        $dendaDibayar = Peminjaman::where('status_bayar', 'lunas')->sum('denda');
 
         return view('admin.pengembalian.index', compact(
             'transaksi',
             'dipinjam',
             'terlambat',
             'kembaliHariIni',
-            'totalDenda'
+            'dendaBelumDibayar',
+            'dendaDibayar'
         ));
     }
 
@@ -176,19 +187,26 @@ class TransaksiController extends Controller
         return back()->with('success', 'Peminjaman disetujui sesuai dengan tanggal rencana kembali yang dipilih siswa.');
     }
 
-    public function reject($id)
+    public function reject(Request $request, $id)
     {
+        $request->validate([
+            'alasan_ditolak' => 'required|string|max:255',
+        ]);
+
         $peminjaman = Peminjaman::with('buku')->findOrFail($id);
 
         if ($peminjaman->status !== 'menunggu_persetujuan') {
             return back()->with('error', 'Status peminjaman bukan menunggu persetujuan.');
         }
 
-        $peminjaman->update(['status' => 'ditolak']);
+        $peminjaman->update([
+            'status' => 'ditolak',
+            'alasan_ditolak' => $request->alasan_ditolak,
+        ]);
 
         $peminjaman->buku->increment('stok');
 
-        return back()->with('success', 'Peminjaman ditolak. Stok buku telah dikembalikan.');
+        return back()->with('success', 'Peminjaman ditolak dengan alasan: ' . $request->alasan_ditolak);
     }
 
     public function update(Request $request, $id)
@@ -214,15 +232,20 @@ class TransaksiController extends Controller
 
     public function kembalikan(Request $request, $id)
     {
+        $request->validate([
+            'kondisi_buku_kembali' => 'required|in:baik,rusak,hilang',
+            'denda_kerusakan'      => 'nullable|numeric|min:0',
+            'catatan_kerusakan'    => 'nullable|string',
+            'foto_kerusakan'       => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
         $peminjaman = Peminjaman::with('buku')->findOrFail($id);
 
         if ($peminjaman->status === 'dikembalikan') {
             return back()->with('error', 'Buku sudah dikembalikan.');
         }
 
-        $tglKembali = $request->tgl_kembali_aktual
-            ? Carbon::parse($request->tgl_kembali_aktual)
-            : Carbon::today();
+        $tglKembali = Carbon::today();
 
         // Hitung denda telat (Rp 5.000 per hari)
         $dendaTelat = 0;
@@ -231,14 +254,23 @@ class TransaksiController extends Controller
             $dendaTelat = $hari * 5000;
         }
         
-        // Total Denda = Denda Manual yang sudah ada (kerusakan) + Denda Telat
-        $totalDenda = $peminjaman->denda + $dendaTelat;
+        $dendaKerusakan = $request->denda_kerusakan ?? 0;
+        $totalDenda = $dendaTelat + $dendaKerusakan;
 
-        $peminjaman->update([
-            'tgl_kembali_aktual' => $tglKembali,
-            'status' => 'dikembalikan',
-            'denda' => $totalDenda,
-        ]);
+        $data = [
+            'tgl_kembali_aktual'   => $tglKembali,
+            'status'               => 'dikembalikan',
+            'denda'                => $totalDenda,
+            'kondisi_buku_kembali' => $request->kondisi_buku_kembali,
+            'catatan_kerusakan'    => $request->catatan_kerusakan,
+            'status_bayar'         => $totalDenda > 0 ? 'belum_bayar' : 'lunas',
+        ];
+
+        if ($request->hasFile('foto_kerusakan')) {
+            $data['foto_kerusakan'] = $request->file('foto_kerusakan')->store('kerusakan', 'public');
+        }
+
+        $peminjaman->update($data);
 
         $peminjaman->buku->increment('stok');
 
@@ -247,7 +279,7 @@ class TransaksiController extends Controller
             $pesan .= ' Total Denda: Rp ' . number_format($totalDenda, 0, ',', '.');
         }
 
-        return redirect()->route('admin.transaksi.index')->with('success', $pesan);
+        return redirect()->route('admin.pengembalian.index')->with('success', $pesan);
     }
 
     public function destroy($id)
@@ -286,7 +318,14 @@ class TransaksiController extends Controller
         return back();
     }
 
-    public function exportPengembalian($type)
+    public function markLunas($id)
+    {
+        $peminjaman = Peminjaman::findOrFail($id);
+        $peminjaman->update(['status_bayar' => 'lunas']);
+        return back()->with('success', 'Status pembayaran berhasil diubah menjadi Lunas.');
+    }
+
+    public function exportPengembalian(Request $request, $type)
     {
         $filename = 'laporan-pengembalian-' . now()->format('YmdHis');
 

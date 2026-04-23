@@ -402,14 +402,30 @@
     <div class="col-6 col-lg-3 animate-in" style="animation-delay: 0.2s;">
         <div class="stat-card">
             <div class="stat-card-inner">
+                <div class="stat-icon success">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value" style="color: var(--success);">
+                        Rp {{ number_format($dendaDibayar, 0, ',', '.') }}
+                    </div>
+                    <div class="stat-label">Denda Terbayar</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6 col-lg-3 animate-in" style="animation-delay: 0.25s;">
+        <div class="stat-card">
+            <div class="stat-card-inner">
                 <div class="stat-icon" style="background:#fff7ed; color:#ea580c;">
-                    <i class="fas fa-money-bill-wave"></i>
+                    <i class="fas fa-file-invoice-dollar"></i>
                 </div>
                 <div class="stat-info">
                     <div class="stat-value" style="color:#ea580c;">
-                        Rp {{ number_format($totalDenda, 0, ',', '.') }}
+                        Rp {{ number_format($dendaBelumDibayar, 0, ',', '.') }}
                     </div>
-                    <div class="stat-label">Total Denda</div>
+                    <div class="stat-label">Tagihan Denda</div>
                 </div>
             </div>
         </div>
@@ -423,7 +439,20 @@
             <i class="fas fa-list me-2" style="color: var(--primary);"></i>
             Daftar Transaksi & Riwayat Pengembalian
         </h6>
-        <form action="{{ route('admin.pengembalian.index') }}" method="GET">
+        <form action="{{ route('admin.pengembalian.index') }}" method="GET" class="d-flex flex-wrap gap-2">
+            <select name="status" class="search-input" style="width: 150px;" onchange="this.form.submit()">
+                <option value="">-- Status Pinjam --</option>
+                <option value="dipinjam" {{ request('status') == 'dipinjam' ? 'selected' : '' }}>📖 Dipinjam</option>
+                <option value="terlambat" {{ request('status') == 'terlambat' ? 'selected' : '' }}>⚠️ Terlambat</option>
+                <option value="dikembalikan" {{ request('status') == 'dikembalikan' ? 'selected' : '' }}>✅ Selesai</option>
+            </select>
+
+            <select name="status_bayar" class="search-input" style="width: 150px;" onchange="this.form.submit()">
+                <option value="">-- Pembayaran --</option>
+                <option value="belum_bayar" {{ request('status_bayar') == 'belum_bayar' ? 'selected' : '' }}>❌ Belum Lunas</option>
+                <option value="lunas" {{ request('status_bayar') == 'lunas' ? 'selected' : '' }}>✅ Lunas</option>
+            </select>
+
             <div class="position-relative">
                 <i class="fas fa-search position-absolute text-muted" style="top: 50%; left: 14px; transform: translateY(-50%); font-size: 12px;"></i>
                 <input type="text" name="search" class="search-input ps-5" placeholder="Cari anggota atau buku..." value="{{ request('search') }}">
@@ -457,6 +486,7 @@
                             <th>TGL PINJAM</th>
                             <th>BATAS KEMBALI</th>
                             <th>STATUS</th>
+                            <th>PEMBAYARAN</th>
                             <th class="text-center" width="15%">AKSI</th>
                         </tr>
                     </thead>
@@ -501,14 +531,23 @@
                                     <span class="badge-status badge-late">
                                         <i class="fas fa-exclamation-triangle"></i> Terlambat
                                     </span>
+                                @elseif($item->status === 'menunggu_pengembalian')
+                                    <span class="badge-status" style="background: #fff7ed; color: #ea580c;">
+                                        <i class="fas fa-hourglass-half"></i> Menunggu Verifikasi
+                                    </span>
                                     <div class="small fw-bold text-danger mt-1">
                                         <i class="fas fa-money-bill-wave me-1"></i> 
                                         Rp {{ number_format($item->hitungDenda(), 0, ',', '.') }}
                                     </div>
                                 @elseif($item->status === 'dikembalikan')
-                                    <span class="badge-status badge-success">
-                                        <i class="fas fa-check-circle"></i> Dikembalikan
+                                    <span class="badge-custom badge-returned">
+                                        <i class="fas fa-check-double"></i> Selesai
                                     </span>
+                                    @if($item->kondisi_buku_kembali !== 'baik')
+                                        <div class="small text-danger mt-1" style="font-size: 11px;">
+                                            <i class="fas fa-exclamation-circle me-1"></i> Kondisi: {{ ucfirst($item->kondisi_buku_kembali) }}
+                                        </div>
+                                    @endif
                                     <div class="small text-success mt-1">
                                         <i class="fas fa-calendar-check me-1"></i>
                                         {{ $item->tgl_kembali_aktual->format('d M Y') }}
@@ -522,15 +561,42 @@
                                 @endif
                             </td>
                             <td class="text-center">
+                                @if($item->status === 'dikembalikan')
+                                    @if($item->status_bayar === 'lunas' || $item->denda == 0)
+                                        <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1" style="font-size: 11px;">
+                                            <i class="fas fa-check-circle me-1"></i> Lunas
+                                         </span>
+                                    @else
+                                        <form action="{{ route('admin.transaksi.lunas', $item->id) }}" method="POST" class="d-inline" id="form-lunas-{{ $item->id }}">
+                                            @csrf
+                                            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" style="font-size: 11px;"
+                                                onclick="confirmLunas('{{ $item->id }}', '{{ number_format($item->denda, 0, ',', '.') }}')">
+                                                <i class="fas fa-money-bill-wave me-1"></i> Bayar
+                                            </button>
+                                        </form>
+                                    @endif
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
                                 @if($item->status !== 'dikembalikan')
                                     <button type="button" class="btn-return"
-                                        onclick="confirmKembali('{{ route('admin.transaksi.kembalikan', $item->id) }}', '{{ $item->anggota->nama }}', '{{ $item->buku->judul }}')">
+                                        onclick="confirmKembali('{{ route('admin.transaksi.kembalikan', $item->id) }}', '{{ $item->anggota->nama }}', '{{ $item->buku->judul }}', '{{ $item->tgl_kembali_rencana->format('Y-m-d') }}')">
                                         <i class="fas fa-undo-alt me-1"></i> Kembalikan
                                     </button>
                                 @else
-                                    <span class="text-muted small fw-bold">
-                                        <i class="fas fa-check me-1"></i> Selesai
-                                    </span>
+                                    <div class="d-flex flex-column gap-1 align-items-center">
+                                        <span class="text-muted small fw-bold">
+                                            <i class="fas fa-check me-1"></i> Selesai
+                                        </span>
+                                        @if($item->status_bayar === 'belum_bayar')
+                                            <button type="button" class="btn btn-link text-warning p-0" style="font-size: 11px; text-decoration: none;"
+                                                onclick="editDenda('{{ route('admin.transaksi.update', $item->id) }}', '{{ $item->denda }}')">
+                                                <i class="fas fa-edit me-1"></i> Edit Denda
+                                            </button>
+                                        @endif
+                                    </div>
                                 @endif
                             </td>
                         </tr>
@@ -550,54 +616,148 @@
     </div>
 </div>
 
-<!-- MODAL PREMIUM -->
+<!-- MODAL PENGEMBALIAN DETIL -->
 <div class="modal fade modal-premium" id="kembaliModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0">
+                <h5 class="modal-title text-white fw-bold">
+                    <i class="fas fa-clipboard-check me-2"></i> Laporan Kondisi Buku Kembali
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="kembaliForm" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-body p-4">
+                    <div class="row g-4">
+                        <!-- Info Buku -->
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded-4 border border-dashed border-primary border-opacity-25">
+                                <div>
+                                    <div class="small text-muted mb-1">Buku yang dikembalikan:</div>
+                                    <h5 class="fw-bold mb-0 text-primary" id="modalBuku">Judul Buku</h5>
+                                </div>
+                                <div class="text-end">
+                                    <div class="small text-muted mb-1">Peminjam:</div>
+                                    <div class="fw-semibold text-dark" id="modalPeminjam">Nama Peminjam</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Kondisi Radio -->
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <label class="fw-bold mb-0">Kondisi Buku</label>
+                                <div class="d-flex gap-3">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="kondisi_buku_kembali" id="kondisibaik" value="baik" checked onchange="updateDendaUI()">
+                                        <label class="form-check-label badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-3 py-2 rounded-pill" for="kondisibaik">
+                                            Baik
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="kondisi_buku_kembali" id="kondisirusak" value="rusak" onchange="updateDendaUI()">
+                                        <label class="form-check-label badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 px-3 py-2 rounded-pill" for="kondisirusak">
+                                            Rusak 
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="kondisi_buku_kembali" id="kondisiHilang" value="hilang" onchange="updateDendaUI()">
+                                        <label class="form-check-label badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 px-3 py-2 rounded-pill" for="kondisiHilang">
+                                            Hilang
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bukti & Denda Row -->
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small text-muted">BUKTI FOTO KERUSAKAN</label>
+                            <div class="input-group">
+                                <input type="file" name="foto_kerusakan" class="form-control" id="fotoKerusakan">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small text-muted">DENDA KERUSAKAN (RP)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">Rp</span>
+                                <input type="number" name="denda_kerusakan" id="dendaKerusakan" class="form-control border-start-0" value="0" min="0" oninput="updateDendaUI()">
+                            </div>
+                        </div>
+
+                        <!-- Catatan -->
+                        <div class="col-12">
+                            <label class="form-label fw-semibold small text-muted">CATATAN KERUSAKAN</label>
+                            <textarea name="catatan_kerusakan" class="form-control" rows="3" placeholder="Jelaskan kondisi kerusakan jika ada..."></textarea>
+                        </div>
+
+                        <!-- Summary Denda -->
+                        <div class="col-12">
+                            <div class="p-4 rounded-4" style="background: #f0fdfa; border: 1px solid #ccfbf1;">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">Denda Keterlambatan:</span>
+                                    <span class="fw-semibold" id="uiDendaTelat">Rp 0</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-3">
+                                    <span class="text-muted">Total Denda Kerusakan:</span>
+                                    <span class="fw-semibold text-warning" id="uiDendaRusak">+ Rp 0</span>
+                                </div>
+                                <hr class="my-3 opacity-10">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="fw-bold mb-0">Total Denda:</h5>
+                                    <h4 class="fw-bold mb-0 text-danger" id="uiTotalDenda">Rp 0</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light px-4 py-3">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm" style="background: #0d9488; border: none;">
+                        Proses Pengembalian
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDIT DENDA -->
+<div class="modal fade modal-premium" id="editDendaModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title text-white fw-semibold">
-                    <i class="fas fa-book-return me-2"></i> Konfirmasi Pengembalian
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0 p-4">
+                <h5 class="modal-title text-white fw-bold">
+                    <i class="fas fa-edit me-2"></i> Edit Nominal Denda
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-4">
-                <div class="text-center mb-4">
-                    <div class="mx-auto bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mb-3" style="width: 70px; height: 70px;">
-                        <i class="fas fa-check-circle" style="font-size: 28px; color: var(--success);"></i>
-                    </div>
-                    <h6 class="fw-bold mb-1">Proses Pengembalian</h6>
-                    <p class="text-muted small mb-0">Konfirmasi bahwa buku telah dikembalikan secara fisik</p>
-                </div>
-
-                <div class="bg-light rounded-3 p-3 mb-4">
-                    <div class="small text-muted mb-1">
-                        <i class="fas fa-user me-1"></i> Peminjam
-                    </div>
-                    <div class="fw-semibold" id="modalPeminjam" style="color: var(--primary-dark);">—</div>
-                    <div class="small text-muted mt-2 mb-1">
-                        <i class="fas fa-book me-1"></i> Buku
-                    </div>
-                    <div class="fw-semibold" id="modalBuku" style="color: var(--primary-dark);">—</div>
-                </div>
-
-                <form id="kembaliForm" method="POST">
-                    @csrf
-                    <div class="mb-3 text-center">
-                        <div class="bg-success bg-opacity-10 text-success p-3 rounded-3 mb-2">
-                            <i class="fas fa-calendar-check me-2"></i><strong>Tanggal Pengembalian:</strong> {{ date('d M Y') }}
+            <form id="editDendaForm" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-body p-4">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold small text-muted text-uppercase tracking-wider">Nominal Denda (Rp)</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-light border-end-0 text-muted fw-bold">Rp</span>
+                            <input type="number" name="denda" id="inputEditDenda" class="form-control border-start-0 bg-light fw-bold" min="0" required placeholder="0" style="color: var(--primary-dark);">
                         </div>
-                        <div class="form-text text-muted small">
-                            <i class="fas fa-info-circle me-1"></i> Denda akan dikalkulasi otomatis berdasarkan tanggal hari ini.
+                        <div class="mt-3 p-3 rounded-3" style="background: var(--primary-soft); border-left: 4px solid var(--primary);">
+                            <div class="small text-muted d-flex align-items-start">
+                                <i class="fas fa-info-circle me-2 mt-1" style="color: var(--primary);"></i>
+                                <span>Ubah nominal denda jika ada penyesuaian manual (misal: denda telat + denda rusak).</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="d-flex gap-2 justify-content-end mt-4">
-                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn rounded-pill px-4" style="background: linear-gradient(135deg, var(--success) 0%, #166534 100%); color: white; border: none;">
-                            <i class="fas fa-check me-1"></i> Konfirmasi Kembali
-                        </button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer border-0 bg-light px-4 py-3 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-5 fw-bold shadow-sm" style="background: var(--primary); border: none;">
+                        <i class="fas fa-save me-2"></i> Simpan Perubahan
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -607,12 +767,70 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    function confirmKembali(action, peminjam, buku) {
+    let currentTglKembaliRencana = null;
+
+    function confirmKembali(action, peminjam, buku, tglKembaliRencana) {
         document.getElementById('kembaliForm').action = action;
         document.getElementById('modalPeminjam').innerHTML = peminjam;
         document.getElementById('modalBuku').innerHTML = buku;
+        currentTglKembaliRencana = tglKembaliRencana;
+        
+        // Reset form
+        document.getElementById('kembaliForm').reset();
+        
+        updateDendaUI();
+        
         var myModal = new bootstrap.Modal(document.getElementById('kembaliModal'));
         myModal.show();
+    }
+
+    function confirmLunas(id, nominal) {
+        Swal.fire({
+            title: 'Konfirmasi Pembayaran',
+            text: "Apakah Anda yakin ingin menandai denda Rp " + nominal + " ini sebagai LUNAS?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#2c5282',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Ya, Sudah Bayar',
+            cancelButtonText: 'Batal',
+            border: 'none',
+            borderRadius: '20px'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('form-lunas-' + id).submit();
+            }
+        });
+    }
+
+    function editDenda(action, denda) {
+        document.getElementById('editDendaForm').action = action;
+        document.getElementById('inputEditDenda').value = denda;
+        var myModal = new bootstrap.Modal(document.getElementById('editDendaModal'));
+        myModal.show();
+    }
+
+    function updateDendaUI() {
+        if (!currentTglKembaliRencana) return;
+
+        const tglRencana = new Date(currentTglKembaliRencana);
+        const tglHariIni = new Date();
+        tglHariIni.setHours(0,0,0,0);
+        tglRencana.setHours(0,0,0,0);
+
+        let dendaTelat = 0;
+        if (tglHariIni > tglRencana) {
+            const diffTime = Math.abs(tglHariIni - tglRencana);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            dendaTelat = diffDays * 5000;
+        }
+
+        const dendaRusak = parseInt(document.getElementById('dendaKerusakan').value) || 0;
+        const totalDenda = dendaTelat + dendaRusak;
+
+        document.getElementById('uiDendaTelat').innerText = 'Rp ' + dendaTelat.toLocaleString('id-ID');
+        document.getElementById('uiDendaRusak').innerText = '+ Rp ' + dendaRusak.toLocaleString('id-ID');
+        document.getElementById('uiTotalDenda').innerText = 'Rp ' + totalDenda.toLocaleString('id-ID');
     }
 
     @if(session('success'))

@@ -315,7 +315,8 @@
 
 <!-- STATISTICS CARDS -->
 <div class="row g-4 mb-4">
-    <div class="col-xl-3 col-md-6 animate-in delay-1">
+    <!-- Sedang Dipinjam -->
+    <div class="col-xl col-md-6 animate-in delay-1">
         <div class="stat-card">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -334,7 +335,8 @@
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 animate-in delay-2">
+    <!-- Terlambat -->
+    <div class="col-xl col-md-6 animate-in delay-2">
         <div class="stat-card">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
@@ -353,40 +355,64 @@
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 animate-in delay-3">
+    <!-- Denda Terbayar -->
+    <div class="col-xl col-md-6 animate-in delay-3">
         <div class="stat-card">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="stat-title">
-                        <i class="fas fa-coins me-1"></i> Denda Berjalan
+                        <i class="fas fa-check-circle me-1"></i> Denda Terbayar
                     </div>
-                    <div class="stat-value text-warning-custom">
-                        Rp {{ number_format($dendaBelumDibayar, 0, ',', '.') }}
+                    <div class="stat-value text-success-custom">
+                        Rp {{ number_format($dendaDibayar, 0, ',', '.') }}
                     </div>
-                    <span class="stat-badge bg-warning-soft">
-                        <i class="fas fa-hourglass-half me-1"></i> Belum Bayar
+                    <span class="stat-badge bg-success-soft">
+                        <i class="fas fa-check me-1"></i> Sudah Bayar
                     </span>
                 </div>
-                <div class="icon-box bg-warning-soft">
-                    <i class="fas fa-money-bill-wave"></i>
+                <div class="icon-box bg-success-soft">
+                    <i class="fas fa-coins"></i>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 animate-in delay-4">
+    <!-- Tagihan Denda (Belum Bayar) -->
+    <div class="col-xl col-md-6 animate-in delay-4">
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-title">
+                        <i class="fas fa-file-invoice-dollar me-1"></i> Tagihan Denda
+                    </div>
+                    <div class="stat-value text-danger-custom">
+                        Rp {{ number_format($dendaBelumDibayar, 0, ',', '.') }}
+                    </div>
+                    <span class="stat-badge bg-danger-soft">
+                        <i class="fas fa-hourglass-half me-1"></i> Belum Bayar
+                    </span>
+                </div>
+                <div class="icon-box bg-danger-soft">
+                    <i class="fas fa-receipt"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Riwayat (Count) -->
+    <div class="col-xl col-md-6 animate-in delay-5">
         <div class="stat-card">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <div class="stat-title">
                         <i class="fas fa-history me-1"></i> Total Riwayat
                     </div>
-                    <div class="stat-value text-success-custom">{{ $totalPinjaman }}</div>
-                    <span class="stat-badge bg-success-soft">
-                        <i class="fas fa-check-circle me-1"></i> Riwayat
+                    <div class="stat-value text-secondary">{{ $totalPinjaman }}</div>
+                    <span class="stat-badge bg-light">
+                        <i class="fas fa-book-reader me-1"></i> Peminjaman
                     </span>
                 </div>
-                <div class="icon-box bg-success-soft">
+                <div class="icon-box bg-light">
                     <i class="fas fa-journal-whills"></i>
                 </div>
             </div>
