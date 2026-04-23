@@ -147,9 +147,6 @@
                                             <button type="submit" class="btn btn-dark text-white" title="Tolak Peminjaman"><i class="bi bi-x-lg"></i></button>
                                         </form>
                                     @elseif($item->status !== 'dikembalikan' && $item->status !== 'ditolak')
-                                        <button type="button" class="btn btn-primary text-white" onclick="confirmKembali(`{{ route('admin.transaksi.kembalikan', $item->id) }}`)" title="Proses Pengembalian">
-                                            <i class="bi bi-box-arrow-in-down"></i>
-                                        </button>
                                     @endif
                                     
                                     @if($item->status !== 'ditolak' && $item->status !== 'menunggu_persetujuan')
