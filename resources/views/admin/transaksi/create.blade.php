@@ -62,10 +62,12 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">Batas Rencana Kembali <span class="text-danger">*</span></label>
-                    <input type="date" name="tgl_kembali_rencana" id="tgl_kembali_rencana" class="form-control bg-light @error('tgl_kembali_rencana') is-invalid @enderror" value="{{ old('tgl_kembali_rencana', date('Y-m-d', strtotime('+7 days'))) }}" required>
-                    @error('tgl_kembali_rencana')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    <div class="form-text text-muted small"><i class="bi bi-info-circle"></i> Default sistem: 7 hari peminjaman</div>
+                    <label class="form-label fw-semibold">Batas Rencana Kembali</label>
+                    <div id="display_tgl_kembali" class="form-control bg-light text-muted fw-bold">
+                        {{ date('d M Y', strtotime('+7 days')) }}
+                    </div>
+                    <input type="hidden" name="tgl_kembali_rencana" id="tgl_kembali_rencana" value="{{ date('Y-m-d', strtotime('+7 days')) }}">
+                    <div class="form-text text-primary small"><i class="bi bi-info-circle-fill"></i> Durasi peminjaman tetap 7 hari.</div>
                 </div>
             </div>
 
@@ -93,15 +95,22 @@
 
         // Auto calculate return date (+7 days)
         $('#tgl_pinjam').on('change', function() {
-            let val = $(this).val(); // "YYYY-MM-DD"
+            let val = $(this).val(); 
             if (val) {
                 let parts = val.split('-');
-                let pinjam = new Date(parts[0], parts[1] - 1, parts[2]); // local time, no UTC shift
+                let pinjam = new Date(parts[0], parts[1] - 1, parts[2]);
                 pinjam.setDate(pinjam.getDate() + 7);
+                
                 let day = ("0" + pinjam.getDate()).slice(-2);
-                let month = ("0" + (pinjam.getMonth() + 1)).slice(-2);
-                let dateStr = pinjam.getFullYear() + "-" + month + "-" + day;
+                let monthNum = pinjam.getMonth();
+                let months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+                let year = pinjam.getFullYear();
+                
+                let dateStr = year + "-" + ("0" + (monthNum + 1)).slice(-2) + "-" + day;
+                let displayStr = day + " " + months[monthNum] + " " + year;
+                
                 $('#tgl_kembali_rencana').val(dateStr);
+                $('#display_tgl_kembali').text(displayStr);
             }
         });
     });

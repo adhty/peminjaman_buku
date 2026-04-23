@@ -40,14 +40,14 @@ class BukuImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnErro
 
         $buku = Buku::where('kode_buku', $row['kode_buku'])->first();
         
-        if ($existing = $buku) {
-            $existing->update($data);
+        if ($buku) {
             $this->skipped++;
-            $buku = $existing;
-        } else {
-            $buku = Buku::create($data);
-            $this->imported++;
+            return null; // Lewati jika sudah ada (tanpa menimpa)
         }
+
+        // Jika belum ada, buat baru
+        $buku = Buku::create($data);
+        $this->imported++;
 
         // --- SYNC MANY TO MANY CATEGORIES ---
         // Split kategori by comma/semicolon (e.g., "Novel, Sains; Horor")

@@ -54,12 +54,7 @@ class BukuController extends Controller
 
     public function pinjam(Request $request, $id)
     {
-        $request->validate([
-            'tgl_kembali_rencana' => 'required|date|after_or_equal:tomorrow',
-        ], [
-            'tgl_kembali_rencana.required' => 'Tanggal pengembalian wajib ditentukan.',
-            'tgl_kembali_rencana.after_or_equal' => 'Tanggal pengembalian minimal adalah hari esok.',
-        ]);
+        $request->validate([]);
 
         $user = auth()->user();
         if (!$user->anggota) {
@@ -72,6 +67,15 @@ class BukuController extends Controller
             return back()->with('error', 'Maaf, stok buku sedang kosong.');
         }
 
+        // Cek total peminjaman aktif (termasuk yang menunggu persetujuan)
+        $totalAktif = Peminjaman::where('anggota_id', $user->anggota->id)
+                                ->whereIn('status', ['menunggu_persetujuan', 'dipinjam', 'terlambat'])
+                                ->count();
+        
+        if ($totalAktif >= 3) {
+            return back()->with('error', 'Maaf, batas maksimal peminjaman adalah 3 buku. Selesaikan peminjaman Anda sebelumnya terlebih dahulu.');
+        }
+
         // Cek apakah siswa masih meminjam buku yang sama
         $sedangDipinjam = Peminjaman::where('anggota_id', $user->anggota->id)
                                     ->where('buku_id', $buku->id)
@@ -82,12 +86,12 @@ class BukuController extends Controller
             return back()->with('error', 'Anda masih memiliki permintaan atau peminjaman aktif untuk buku ini.');
         }
 
-        // Buat transaksi peminjaman (Batas Tanggal Kustom)
+        // Buat transaksi peminjaman (Batas waktu otomatis 7 hari)
         Peminjaman::create([
             'anggota_id'          => $user->anggota->id,
             'buku_id'             => $buku->id,
             'tgl_pinjam'          => today(),
-            'tgl_kembali_rencana' => $request->tgl_kembali_rencana,
+            'tgl_kembali_rencana' => today()->addDays(7),
             'status'              => 'menunggu_persetujuan',
         ]);
 

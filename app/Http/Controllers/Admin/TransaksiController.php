@@ -121,9 +121,6 @@ class TransaksiController extends Controller
             'anggota_id'          => 'required|exists:anggota,id',
             'buku_id'             => 'required|exists:buku,id',
             'tgl_pinjam'          => 'required|date',
-            'tgl_kembali_rencana' => 'required|date|after:tgl_pinjam',
-        ], [
-            'tgl_kembali_rencana.after' => 'Tanggal rencana kembali harus setelah tanggal pinjam.',
         ]);
 
         $buku = Buku::findOrFail($request->buku_id);
@@ -132,11 +129,20 @@ class TransaksiController extends Controller
             return back()->with('error', 'Stok buku tidak tersedia.')->withInput();
         }
 
+        // Cek total peminjaman aktif anggota
+        $totalAktif = Peminjaman::where('anggota_id', $request->anggota_id)
+                                ->whereIn('status', ['menunggu_persetujuan', 'dipinjam', 'terlambat'])
+                                ->count();
+        
+        if ($totalAktif >= 3) {
+            return back()->with('error', 'Anggota ini sudah mencapai batas maksimal peminjaman (3 buku).')->withInput();
+        }
+
         Peminjaman::create([
             'anggota_id'          => $request->anggota_id,
-            'buku_id'             => $request->buku_id,
+            'buku_id'             => $buku->id,
             'tgl_pinjam'          => $request->tgl_pinjam,
-            'tgl_kembali_rencana' => $request->tgl_kembali_rencana,
+            'tgl_kembali_rencana' => \Carbon\Carbon::parse($request->tgl_pinjam)->addDays(7),
             'status'              => 'dipinjam',
         ]);
 
@@ -153,12 +159,22 @@ class TransaksiController extends Controller
             return back()->with('error', 'Status peminjaman bukan menunggu persetujuan.');
         }
 
+        // Cek total peminjaman aktif anggota saat ini
+        $totalAktif = Peminjaman::where('anggota_id', $peminjaman->anggota_id)
+                                ->whereIn('status', ['dipinjam', 'terlambat'])
+                                ->count();
+        
+        if ($totalAktif >= 3) {
+            return back()->with('error', 'Gagal menyetujui. Anggota ini sudah memiliki 3 peminjaman aktif lainnya.');
+        }
+
         $peminjaman->update([
             'status' => 'dipinjam',
             'tgl_pinjam' => today(),
+            'tgl_kembali_rencana' => today()->addDays(7),
         ]);
 
-        return back()->with('success', 'Peminjaman disetujui.');
+        return back()->with('success', 'Peminjaman disetujui. Batas pengembalian diatur otomatis 7 hari dari sekarang.');
     }
 
     public function reject($id)
@@ -194,7 +210,7 @@ class TransaksiController extends Controller
             $peminjaman->update(['status' => 'dipinjam']);
         }
 
-        return back()->with('success', 'Transaksi berhasil diperbarui (Tanggal & Denda).');
+        return back()->with('success', 'Transaksi berhasil diperbarui.');
     }
 
     public function kembalikan(Request $request, $id)
@@ -209,24 +225,27 @@ class TransaksiController extends Controller
             ? Carbon::parse($request->tgl_kembali_aktual)
             : Carbon::today();
 
-        $denda = $peminjaman->denda;
-
-        if ($denda == 0 && $tglKembali->gt($peminjaman->tgl_kembali_rencana)) {
-            $hari  = $peminjaman->tgl_kembali_rencana->diffInDays($tglKembali);
-            $denda = $hari * 5000;
+        // Hitung denda telat (Rp 5.000 per hari)
+        $dendaTelat = 0;
+        if ($tglKembali->gt($peminjaman->tgl_kembali_rencana)) {
+            $hari = $peminjaman->tgl_kembali_rencana->diffInDays($tglKembali);
+            $dendaTelat = $hari * 5000;
         }
+        
+        // Total Denda = Denda Manual yang sudah ada (kerusakan) + Denda Telat
+        $totalDenda = $peminjaman->denda + $dendaTelat;
 
         $peminjaman->update([
             'tgl_kembali_aktual' => $tglKembali,
             'status' => 'dikembalikan',
-            'denda' => $denda,
+            'denda' => $totalDenda,
         ]);
 
         $peminjaman->buku->increment('stok');
 
         $pesan = 'Buku berhasil dikembalikan.';
-        if ($denda > 0) {
-            $pesan .= ' Denda keterlambatan: Rp ' . number_format($denda, 0, ',', '.');
+        if ($totalDenda > 0) {
+            $pesan .= ' Total Denda: Rp ' . number_format($totalDenda, 0, ',', '.');
         }
 
         return redirect()->route('admin.transaksi.index')->with('success', $pesan);

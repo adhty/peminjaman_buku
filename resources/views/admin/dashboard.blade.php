@@ -528,9 +528,17 @@
                                         <span class="badge-status badge-borrowed">
                                             <i class="fas fa-book-reader"></i> Dipinjam
                                         </span>
+                                    @elseif($p->status === 'menunggu_persetujuan')
+                                        <span class="badge-status bg-info bg-opacity-10 text-info">
+                                            <i class="fas fa-clock"></i> Menunggu
+                                        </span>
                                     @elseif($p->status === 'dikembalikan')
                                         <span class="badge-status badge-returned">
                                             <i class="fas fa-check-double"></i> Selesai
+                                        </span>
+                                    @elseif($p->status === 'ditolak')
+                                        <span class="badge-status bg-secondary bg-opacity-10 text-secondary">
+                                            <i class="fas fa-times-circle"></i> Ditolak
                                         </span>
                                     @else
                                         <span class="badge-status badge-late">

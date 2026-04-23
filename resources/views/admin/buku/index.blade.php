@@ -230,7 +230,7 @@
             </div>
             <div class="d-flex align-items-start gap-2">
                 <i class="bi bi-exclamation-triangle-fill text-warning mt-1"></i>
-                <div class="small">Jika <strong>kode_buku</strong> sudah ada, data buku tersebut akan <strong>diperbarui</strong>, bukan digandakan.</div>
+                <div class="small">Jika <strong>kode_buku</strong> sudah ada, baris tersebut akan <strong>dilewati</strong> (tidak akan menimpa data yang ada).</div>
             </div>
         </div>
 

@@ -582,15 +582,12 @@
 
                 <form id="kembaliForm" method="POST">
                     @csrf
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold small">
-                            <i class="fas fa-calendar-alt me-2" style="color: var(--primary);"></i>Tanggal Aktual Pengembalian
-                        </label>
-                        <input type="date" name="tgl_kembali_aktual" class="form-control rounded-3" 
-                            value="{{ date('Y-m-d') }}" max="{{ date('Y-m-d') }}" required
-                            style="border: 2px solid #e2e8f0; padding: 10px;">
-                        <div class="form-text text-muted small mt-1">
-                            <i class="fas fa-info-circle me-1"></i> Denda akan dikalkulasi otomatis bila melewati batas jadwal.
+                    <div class="mb-3 text-center">
+                        <div class="bg-success bg-opacity-10 text-success p-3 rounded-3 mb-2">
+                            <i class="fas fa-calendar-check me-2"></i><strong>Tanggal Pengembalian:</strong> {{ date('d M Y') }}
+                        </div>
+                        <div class="form-text text-muted small">
+                            <i class="fas fa-info-circle me-1"></i> Denda akan dikalkulasi otomatis berdasarkan tanggal hari ini.
                         </div>
                     </div>
                     <div class="d-flex gap-2 justify-content-end mt-4">

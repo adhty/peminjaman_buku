@@ -153,7 +153,7 @@
                                     @endif
                                     
                                     @if($item->status !== 'ditolak' && $item->status !== 'menunggu_persetujuan')
-                                        <button type="button" class="btn btn-warning text-dark border-0" onclick="editTransaksi(`{{ route('admin.transaksi.update', $item->id) }}`, `{{ $item->tgl_kembali_rencana->format('Y-m-d') }}`, `{{ $item->denda }}`)" title="Edit Tanggal & Denda Manual">
+                                        <button type="button" class="btn btn-warning text-dark border-0" onclick="editTransaksi(`{{ route('admin.transaksi.update', $item->id) }}`, `{{ $item->tgl_kembali_rencana->format('Y-m-d') }}`, `{{ $item->denda }}`)" title="Edit Batas Kembali & Denda Manual">
                                             <i class="bi bi-pencil-square"></i>
                                         </button>
                                     @endif
@@ -190,10 +190,11 @@
           <div class="modal-body pt-3 pb-4">
             <p class="text-muted mb-4">Apakah Anda yakin buku ini telah dikembalikan oleh siswa secara fisik?</p>
             
-            <div class="mb-3">
-                <label class="form-label fw-semibold">Tanggal Aktual Pengembalian</label>
-                <input type="date" name="tgl_kembali_aktual" class="form-control bg-light" value="{{ date('Y-m-d') }}" max="{{ date('Y-m-d') }}" required>
-                <div class="form-text text-muted small mt-2"><i class="bi bi-info-circle"></i> Denda akan otomatis dikalkulasi sesuai aturan jika pengembalian melewati batas jadwal.</div>
+            <div class="mb-3 text-center">
+                <div class="bg-success bg-opacity-10 text-success p-3 rounded-3 mb-2">
+                    <i class="bi bi-calendar-check me-1"></i> <strong>Tanggal Pengembalian:</strong> {{ date('d M Y') }}
+                </div>
+                <div class="form-text text-muted small"><i class="bi bi-info-circle"></i> Denda akan otomatis dikalkulasi berdasarkan tanggal hari ini.</div>
             </div>
           </div>
           <div class="modal-footer border-top-0 bg-light rounded-bottom">
@@ -221,16 +222,22 @@
           <div class="modal-body pt-3 pb-4">
             <p class="text-muted mb-4 small">Sesuaikan tanggal kembali atau terapkan denda kustom (misal: buku hilang/rusak).</p>
             <div class="mb-3">
-                <label class="form-label fw-semibold">Tanggal Batas Pengembalian</label>
-                <input type="date" name="tgl_kembali_rencana" id="edit_tgl_kembali_rencana" class="form-control bg-light" required>
+                <label class="form-label fw-semibold small text-muted">Tanggal Batas Pengembalian</label>
+                <div id="display_tgl_kembali_rencana" class="fw-bold p-2 bg-light rounded border"></div>
+                <input type="hidden" name="tgl_kembali_rencana" id="edit_tgl_kembali_rencana">
             </div>
             <div class="mb-3">
-                <label class="form-label fw-semibold">Ganti Denda Manual (Rp)</label>
+                <label class="form-label fw-semibold">Denda Kerusakan/Lainnya (Rp)</label>
                 <div class="input-group">
                     <span class="input-group-text border-end-0">Rp</span>
                     <input type="number" name="denda" id="edit_denda" class="form-control border-start-0" min="0" placeholder="0">
                 </div>
-                <div class="form-text text-muted" style="font-size: 11px;">Isi angka denda jika terjadi kerusakan/hilang. Isi 0 agar sistem menggunakan denda telat otomatis (5000/hari).</div>
+                <div class="form-text text-muted" style="font-size: 11px;">Isi angka denda jika terjadi kerusakan atau buku hilang.</div>
+            </div>
+            <div class="mb-3">
+                <div class="alert alert-info py-2 px-3 mb-0" style="font-size: 11px; border-radius: 12px;">
+                    <i class="bi bi-info-circle-fill me-1"></i> Denda keterlambatan tetap dihitung otomatis (Rp 5.000/hari) dan akan ditambahkan ke denda kerusakan di atas.
+                </div>
             </div>
           </div>
           <div class="modal-footer border-top-0 bg-light rounded-bottom">
@@ -256,6 +263,12 @@
     function editTransaksi(action, tgl, denda) {
         document.getElementById('editForm').action = action;
         document.getElementById('edit_tgl_kembali_rencana').value = tgl;
+        
+        // Format tanggal untuk tampilan (YYYY-MM-DD -> DD MMM YYYY)
+        const date = new Date(tgl);
+        const options = { day: 'numeric', month: 'short', year: 'numeric' };
+        document.getElementById('display_tgl_kembali_rencana').innerText = date.toLocaleDateString('id-ID', options);
+        
         document.getElementById('edit_denda').value = denda || 0;
         var myModal = new bootstrap.Modal(document.getElementById('editModal'));
         myModal.show();

@@ -172,11 +172,11 @@ class BukuController extends Controller
 
         $errors = $import->errors();
         $imported = $import->getImportedCount();
-        $updated  = $import->getSkippedCount();
+        $skipped  = $import->getSkippedCount();
         $errorCount = count($errors);
 
         $message = "Import selesai: {$imported} buku baru ditambahkan";
-        if ($updated > 0) $message .= ", {$updated} diperbarui";
+        if ($skipped > 0) $message .= ", {$skipped} dilewati (sudah ada)";
         if ($errorCount > 0) $message .= ", {$errorCount} baris gagal";
         $message .= '.';
 

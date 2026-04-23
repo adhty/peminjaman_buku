@@ -316,28 +316,24 @@
                     <strong id="judulBukuPinjam" class="text-dark fs-6 d-block" style="color: var(--primary-dark) !important;">-</strong>
                 </div>
 
-                <div class="mb-4">
-                    <label class="form-label fw-semibold small mb-2">
-                        <i class="fas fa-calendar-alt me-2" style="color: var(--primary);"></i>Tanggal Pengembalian
-                    </label>
-                    <input type="date" id="inputTglKembali" class="form-control rounded-3" 
-                           min="{{ \Carbon\Carbon::tomorrow()->format('Y-m-d') }}"
-                           style="border: 2px solid #e2e8f0; padding: 12px;">
-                    <div class="form-text mt-2 small">
-                        <i class="fas fa-info-circle me-1" style="color: var(--primary);"></i>
-                        Pilih tanggal Anda akan mengembalikan buku. Minimal esok hari.
+                <div class="alert alert-warning py-3 px-3 small mb-0" style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 12px; color: #92400e;">
+                    <div class="d-flex gap-3">
+                        <i class="fas fa-info-circle fs-5 mt-1"></i>
+                        <div>
+                            <div class="fw-bold mb-1">Ketentuan Peminjaman:</div>
+                            <ul class="mb-0 ps-3">
+                                <li>Durasi peminjaman: <strong>7 Hari</strong></li>
+                                <li>Denda keterlambatan: <strong>Rp 5.000/hari</strong></li>
+                                <li>Status: <strong>Menunggu Persetujuan Admin</strong></li>
+                            </ul>
+                        </div>
                     </div>
-                </div>
-
-                <div class="alert alert-info py-2 px-3 small mb-0" style="background: var(--primary-soft); border: none; border-radius: 12px;">
-                    <i class="fas fa-clock me-2"></i>
-                    Maksimal peminjaman adalah 7 hari. Denda Rp 5.000/hari jika terlambat.
                 </div>
             </div>
             <div class="modal-footer border-0 pt-0 pb-4 px-4">
                 <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-                <button type="button" id="btnProsesPinjam" class="btn rounded-pill px-4" style="background: var(--primary); color: white;">
-                    <i class="fas fa-check me-2"></i> Ya, Pinjam Sekarang
+                <button type="submit" form="formPinjamDetail" id="btnProsesPinjam" class="btn rounded-pill px-4" style="background: var(--primary); color: white;">
+                    <i class="fas fa-check me-2"></i> Ya, Ajukan Peminjaman
                 </button>
             </div>
         </div>
@@ -359,30 +355,10 @@
         myModal.show();
     }
 
-    document.getElementById('btnProsesPinjam').addEventListener('click', function() {
-        if(formPinjamActive) {
-            const tglKembali = document.getElementById('inputTglKembali').value;
-            if(!tglKembali) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Perhatian',
-                    text: 'Silakan pilih tanggal pengembalian terlebih dahulu!',
-                    confirmButtonColor: '#2c5282'
-                });
-                document.getElementById('inputTglKembali').focus();
-                return;
-            }
-
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = 'tgl_kembali_rencana';
-            hiddenInput.value = tglKembali;
-            formPinjamActive.appendChild(hiddenInput);
-
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
-            formPinjamActive.submit();
-        }
+    document.getElementById('formPinjamDetail').addEventListener('submit', function() {
+        const btn = document.getElementById('btnProsesPinjam');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Memproses...';
     });
 
     @if(session('success'))

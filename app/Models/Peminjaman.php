@@ -52,27 +52,20 @@ class Peminjaman extends Model
 
     public function hitungDenda(): int
     {
-        // ✅ 1. Prioritas denda manual (sudah disimpan di database)
-        if ($this->denda > 0) {
+        // Jika sudah dikembalikan, nilai denda di database adalah TOTAL
+        if ($this->status === 'dikembalikan') {
             return $this->denda;
         }
 
-        // ✅ 2. Jika sudah dikembalikan dan terlambat
-        if ($this->tgl_kembali_aktual) {
-            if ($this->tgl_kembali_aktual->gt($this->tgl_kembali_rencana)) {
-                $hari = $this->tgl_kembali_rencana->diffInDays($this->tgl_kembali_aktual);
-                return $hari * 5000;
-            }
-            return 0;
-        }
-
-        // ✅ 3. Jika BELUM dikembalikan (denda berjalan)
+        // Hitung denda telat berjalan
+        $dendaTelat = 0;
         if (today()->gt($this->tgl_kembali_rencana)) {
             $hari = $this->tgl_kembali_rencana->diffInDays(today());
-            return $hari * 5000;
+            $dendaTelat = $hari * 5000;
         }
 
-        return 0;
+        // Total = Denda Manual (kerusakan dsb) + Denda Telat
+        return $this->denda + $dendaTelat;
     }
 
     /*
